@@ -31,6 +31,10 @@ yarn-error.log*
 
 # env files (can opt-in for commiting if needed)
 .env*
+.env
+.env*.local
+# local env files
+# do not commit any .env files to git, except for the .env.example file. https://create.t3.gg/en/usage/env-variables#using-environment-variables
 
 # vercel
 .vercel
@@ -38,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# idea files
+.idea
