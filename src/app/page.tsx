@@ -68,7 +68,7 @@ export default function Home() {
                 className="inline-block"
               >
                 <Link
-                  href="/app"
+                  href="/dashboard"
                   className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]"
                 >
                   BREW
