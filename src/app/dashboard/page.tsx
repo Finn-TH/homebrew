@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   CheckSquare,
   ListTodo,
@@ -14,6 +13,7 @@ import {
   ArrowRight,
   Coffee,
 } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
 
 export default function Dashboard() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -69,12 +69,7 @@ export default function Dashboard() {
               <div className="h-2 w-2 rounded-full bg-green-500" />
               Brewing in progress
             </div>
-            <Avatar className="border-2 border-[#8B4513]">
-              <AvatarImage src="/placeholder.svg" alt="User profile" />
-              <AvatarFallback className="bg-[#8B4513]/10 text-[#8B4513]">
-                HB
-              </AvatarFallback>
-            </Avatar>
+            <UserButton afterSignOutUrl="/" />
           </div>
         </div>
 

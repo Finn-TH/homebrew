@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Coffee, LayoutDashboard, Brain, PiggyBank, Heart } from "lucide-react";
 import Link from "next/link";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 export default function Home() {
   const features = [
@@ -45,6 +46,11 @@ export default function Home() {
               HomeBrew
             </span>
           </div>
+          <div>
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+          </div>
         </nav>
 
         <main className="relative mx-auto max-w-7xl px-6 py-32 text-center sm:py-40 lg:px-8">
@@ -67,12 +73,21 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
                 className="inline-block"
               >
-                <Link
-                  href="/dashboard"
-                  className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]"
-                >
-                  BREW
-                </Link>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]">
+                      BREW
+                    </button>
+                  </SignInButton>
+                </SignedOut>
+                <SignedIn>
+                  <Link
+                    href="/dashboard"
+                    className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]"
+                  >
+                    BREW
+                  </Link>
+                </SignedIn>
               </motion.div>
             </div>
           </motion.div>
