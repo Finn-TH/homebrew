@@ -39,27 +39,28 @@ CLERK_SECRET_KEY=your_clerk_secret_key
 
 ## Switching Authentication Providers
 
-### For Clerk (main branch):
+The project includes a convenient script to switch between auth providers. You can use the following commands:
 
 ```bash
-git checkout main
-# Comment out Supabase variables in .env.local
-# Uncomment Clerk variables in .env.local
-rm -rf node_modules .next pnpm-lock.yaml
-pnpm install
-pnpm dev
+pnpm auth:clerk    # Switch to Clerk authentication
+pnpm auth:supabase # Switch to Supabase authentication
 ```
 
-### For Supabase (feature/supabase-auth branch):
+Add `--force` flag to discard any local changes during switching:
 
 ```bash
-git checkout feature/supabase-auth
-# Comment out Clerk variables in .env.local
-# Uncomment Supabase variables in .env.local
-rm -rf node_modules .next pnpm-lock.yaml
-pnpm install
-pnpm dev
+pnpm auth:clerk --force    # Force switch to Clerk
+pnpm auth:supabase --force # Force switch to Supabase
 ```
+
+The script will:
+
+- Check for uncommitted changes
+- Switch branches
+- Clean up build files
+- Reinstall dependencies
+
+> Note: Remember to update your `.env.local` with the appropriate variables for each auth provider.```
 
 ## Development
 
