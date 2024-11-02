@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "auth:clerk": "node scripts/switch-auth.js clerk",
+    "auth:clerk:force": "node scripts/switch-auth.js clerk --force",
+    "auth:supabase": "node scripts/switch-auth.js supabase",
+    "auth:supabase:force": "node scripts/switch-auth.js supabase --force"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.1.0",

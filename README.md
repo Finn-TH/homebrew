@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HomeBrew
+
+A Next.js application for home management with dual authentication implementations.
+
+## Project Structure
+
+The project maintains two authentication approaches in separate branches:
+
+- `main` - Clerk Authentication
+- `feature/supabase-auth` - Supabase Authentication
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone [your-repo-url]
+cd [your-repo-name]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Copy the environment variables:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Configure your `.env.local`:
 
-## Learn More
+```env
+# For Supabase Auth (feature/supabase-auth branch)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-To learn more about Next.js, take a look at the following resources:
+# For Clerk Auth (main branch)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Switching Authentication Providers
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project includes a convenient script to switch between auth providers. You can use the following commands:
 
-## Deploy on Vercel
+```bash
+pnpm auth:clerk    # Switch to Clerk authentication
+pnpm auth:supabase # Switch to Supabase authentication
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Add `--force` flag to discard any local changes during switching:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm auth:clerk --force    # Force switch to Clerk
+pnpm auth:supabase --force # Force switch to Supabase
+```
+
+The script will:
+
+- Check for uncommitted changes
+- Switch branches
+- Clean up build files
+- Reinstall dependencies
+
+> Note: Remember to update your `.env.local` with the appropriate variables for each auth provider.```
+
+## Development
+
+```bash
+pnpm dev     # Start development server
+pnpm build   # Build for production
+pnpm start   # Start production server
+```
+
+## Note
+
+This project currently maintains two authentication implementations for evaluation purposes. Eventually, one approach will be chosen and merged into the main branch.
+
+## Tech Stack
+
+- Next.js 14
+- TypeScript
+- TailwindCSS
+- Authentication: Clerk / Supabase
