@@ -8,9 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "auth:clerk": "node scripts/switch-auth.js clerk",
-    "auth:clerk:force": "node scripts/switch-auth.js clerk --force",
-    "auth:supabase": "node scripts/switch-auth.js supabase",
-    "auth:supabase:force": "node scripts/switch-auth.js supabase --force"
+    "auth:supabase": "node scripts/switch-auth.js supabase"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.1",

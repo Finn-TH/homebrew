@@ -87,11 +87,12 @@ async function showForceWarning() {
 
 // Main auth switching function
 async function switchAuth(provider, force = false) {
-  const targetBranch = provider === "clerk" ? "main" : "feature/supabase-auth";
+  const targetBranch =
+    provider === "clerk" ? "feature/clerk-auth" : "feature/supabase-auth";
+
   const currentBranch = await getCurrentBranch();
 
   try {
-    // Initial check
     logger.info("Starting auth provider switch...");
 
     // Show force warning if force flag is used
@@ -107,7 +108,7 @@ async function switchAuth(provider, force = false) {
     execSync("rm -rf .next node_modules pnpm-lock.yaml");
     logger.success("Cleanup complete");
 
-    // Branch switch with force if specified
+    // Branch switch
     logger.step(`Switching to ${provider} authentication...`);
     const checkoutCommand = force
       ? `git checkout -f ${targetBranch}`
