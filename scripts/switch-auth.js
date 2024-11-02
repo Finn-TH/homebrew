@@ -87,12 +87,21 @@ async function showForceWarning() {
 
 // Main auth switching function
 async function switchAuth(provider, force = false) {
-  const targetBranch = provider === "clerk" ? "main" : "feature/supabase-auth";
+  const targetBranch =
+    provider === "main"
+      ? "main"
+      : provider === "clerk"
+      ? "feature/clerk-auth"
+      : "feature/supabase-auth";
+
   const currentBranch = await getCurrentBranch();
 
   try {
-    // Initial check
-    logger.info("Starting auth provider switch...");
+    logger.info(
+      `Starting switch to ${
+        provider === "main" ? "clean main" : `${provider} authentication`
+      }...`
+    );
 
     // Show force warning if force flag is used
     if (force) {
@@ -107,8 +116,8 @@ async function switchAuth(provider, force = false) {
     execSync("rm -rf .next node_modules pnpm-lock.yaml");
     logger.success("Cleanup complete");
 
-    // Branch switch with force if specified
-    logger.step(`Switching to ${provider} authentication...`);
+    // Branch switch
+    logger.step(`Switching to ${targetBranch} branch...`);
     const checkoutCommand = force
       ? `git checkout -f ${targetBranch}`
       : `git checkout ${targetBranch}`;
@@ -121,10 +130,14 @@ async function switchAuth(provider, force = false) {
     logger.success("Dependencies installed");
 
     // Final success message
-    logger.done(`Successfully switched to ${provider} authentication!`);
+    if (provider === "main") {
+      logger.done("Successfully switched to clean main branch!");
+    } else {
+      logger.done(`Successfully switched to ${provider} authentication!`);
+    }
     logger.info("Run pnpm dev to start the development server 🚀");
   } catch (error) {
-    logger.error(`Failed to switch auth: ${error.message}`);
+    logger.error(`Failed to switch branch: ${error.message}`);
     process.exit(1);
   }
 }
@@ -134,8 +147,8 @@ const args = process.argv.slice(2);
 const provider = args[0];
 const force = args.includes("--force");
 
-if (!provider || !["clerk", "supabase"].includes(provider)) {
-  logger.error("Please specify an auth provider: clerk or supabase");
+if (!provider || !["clerk", "supabase", "main"].includes(provider)) {
+  logger.error("Please specify: main, clerk, or supabase");
   logger.info("Usage: pnpm auth:<provider> [--force]");
   process.exit(1);
 }

@@ -4,10 +4,11 @@ A Next.js application for home management with dual authentication implementatio
 
 ## Project Structure
 
-The project maintains two authentication approaches in separate branches:
+The project maintains three branches for authentication testing and implementation:
 
-- `main` - Clerk Authentication
-- `feature/supabase-auth` - Supabase Authentication
+- `main` - Clean, auth-agnostic base code
+- `feature/clerk-auth` - Clerk Authentication implementation
+- `feature/supabase-auth` - Supabase Authentication implementation
 
 ## Getting Started
 
@@ -32,35 +33,49 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-# For Clerk Auth (main branch)
+# For Clerk Auth (feature/clerk-auth branch)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 CLERK_SECRET_KEY=your_clerk_secret_key
 ```
 
-## Switching Authentication Providers
+## Authentication Testing Workflow
 
-The project includes a convenient script to switch between auth providers. You can use the following commands:
+### Initial Testing
+
+To test either authentication implementation, checkout the respective feature branch:
 
 ```bash
+git checkout feature/clerk-auth     # Test Clerk implementation
+# or
+git checkout feature/supabase-auth  # Test Supabase implementation
+```
+
+### Switching Between Branches
+
+During testing, use our convenient switching script:
+
+```bash
+pnpm auth:main     # Switch to clean main branch
 pnpm auth:clerk    # Switch to Clerk authentication
 pnpm auth:supabase # Switch to Supabase authentication
 ```
 
-Add `--force` flag to discard any local changes during switching:
+Add `--force` flag for a fresh start:
 
 ```bash
+pnpm auth:main --force     # Force switch to clean main
 pnpm auth:clerk --force    # Force switch to Clerk
 pnpm auth:supabase --force # Force switch to Supabase
 ```
 
-The script will:
+The switching script will:
 
 - Check for uncommitted changes
-- Switch branches
+- Switch between branches
 - Clean up build files
 - Reinstall dependencies
 
-> Note: Remember to update your `.env.local` with the appropriate variables for each auth provider.```
+> Note: When switching to auth branches, remember to update your `.env.local` with the appropriate variables for each auth provider.
 
 ## Development
 
@@ -72,7 +87,7 @@ pnpm start   # Start production server
 
 ## Note
 
-This project currently maintains two authentication implementations for evaluation purposes. Eventually, one approach will be chosen and merged into the main branch.
+This project maintains separate authentication implementations for evaluation purposes. Once an auth provider is chosen, its feature branch will be merged into main and the alternative implementation will be archived.
 
 ## Tech Stack
 
