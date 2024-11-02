@@ -23,12 +23,17 @@ async function getCurrentBranch() {
   }
 }
 
-// Git status checker
-async function checkGitStatus() {
+// Git status checker with force option
+async function checkGitStatus(force = false) {
   try {
     const status = execSync("git status --porcelain").toString();
     if (status) {
       logger.warning("Uncommitted changes detected");
+
+      if (force) {
+        logger.warning("Force flag detected - Changes will be discarded! ⚠️");
+        return;
+      }
 
       const rl = readline.createInterface({
         input: process.stdin,
@@ -54,8 +59,34 @@ async function checkGitStatus() {
   }
 }
 
+// Add this helper function at the top with other utilities
+async function showForceWarning() {
+  console.log("\n🚨 FORCE MODE ACTIVATED 🚨");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("⚠️  All local changes will be discarded");
+  console.log("⚠️  Branch will be forcefully switched");
+  console.log("⚠️  This action cannot be undone");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question("Are you sure you want to force switch? (y/n): ", (answer) => {
+      rl.close();
+      if (answer.toLowerCase() !== "y") {
+        logger.error("Force switch cancelled");
+        process.exit(1);
+      }
+      resolve();
+    });
+  });
+}
+
 // Main auth switching function
-async function switchAuth(provider) {
+async function switchAuth(provider, force = false) {
   const targetBranch = provider === "clerk" ? "main" : "feature/supabase-auth";
   const currentBranch = await getCurrentBranch();
 
@@ -63,38 +94,26 @@ async function switchAuth(provider) {
     // Initial check
     logger.info("Starting auth provider switch...");
 
-    // Check if already on correct branch
-    if (currentBranch === targetBranch) {
-      logger.warning(`Already on ${provider} authentication branch`);
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      return new Promise((resolve) => {
-        rl.question("Do you want to clean and reinstall? (y/n): ", (answer) => {
-          rl.close();
-          if (answer.toLowerCase() !== "y") {
-            logger.info("No changes made");
-            process.exit(0);
-          }
-          resolve();
-        });
-      });
+    // Show force warning if force flag is used
+    if (force) {
+      await showForceWarning();
     }
 
     // Check git status if switching branches
-    await checkGitStatus();
+    await checkGitStatus(force);
 
     // Cleanup
     logger.step("Cleaning up build files...");
     execSync("rm -rf .next node_modules pnpm-lock.yaml");
     logger.success("Cleanup complete");
 
-    // Branch switch
+    // Branch switch with force if specified
     logger.step(`Switching to ${provider} authentication...`);
-    execSync(`git checkout ${branch}`);
-    logger.success(`Switched to ${branch} branch`);
+    const checkoutCommand = force
+      ? `git checkout -f ${targetBranch}`
+      : `git checkout ${targetBranch}`;
+    execSync(checkoutCommand);
+    logger.success(`Switched to ${targetBranch} branch`);
 
     // Dependencies
     logger.step("Installing dependencies...");
@@ -110,12 +129,16 @@ async function switchAuth(provider) {
   }
 }
 
-// Command validation
-const provider = process.argv[2];
+// Command validation with force option
+const args = process.argv.slice(2);
+const provider = args[0];
+const force = args.includes("--force");
+
 if (!provider || !["clerk", "supabase"].includes(provider)) {
   logger.error("Please specify an auth provider: clerk or supabase");
+  logger.info("Usage: pnpm auth:<provider> [--force]");
   process.exit(1);
 }
 
-// Execute
-switchAuth(provider);
+// Execute with force option
+switchAuth(provider, force);
