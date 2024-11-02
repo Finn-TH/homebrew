@@ -13,7 +13,6 @@ import {
   ArrowRight,
   Coffee,
 } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
 
 export default function Dashboard() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -69,7 +68,6 @@ export default function Dashboard() {
               <div className="h-2 w-2 rounded-full bg-green-500" />
               Brewing in progress
             </div>
-            <UserButton afterSignOutUrl="/" />
           </div>
         </div>
 

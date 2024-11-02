@@ -1,9 +1,8 @@
-"use client"; // Required for framer-motion
+"use client";
 
 import { motion } from "framer-motion";
 import { Coffee, LayoutDashboard, Brain, PiggyBank, Heart } from "lucide-react";
 import Link from "next/link";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 export default function Home() {
   const features = [
@@ -31,7 +30,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#FDF6EC]">
-      {/* Rest of your code remains exactly the same */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -left-4 top-1/4 h-48 w-48 rounded-full bg-[#8B4513]/10" />
         <div className="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-[#D2691E]/10" />
@@ -45,11 +43,6 @@ export default function Home() {
             <span className="text-xl font-semibold text-[#8B4513]">
               HomeBrew
             </span>
-          </div>
-          <div>
-            <SignedIn>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
           </div>
         </nav>
 
@@ -73,21 +66,12 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
                 className="inline-block"
               >
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <button className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]">
-                      BREW
-                    </button>
-                  </SignInButton>
-                </SignedOut>
-                <SignedIn>
-                  <Link
-                    href="/dashboard"
-                    className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]"
-                  >
-                    BREW
-                  </Link>
-                </SignedIn>
+                <Link
+                  href="/dashboard"
+                  className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]"
+                >
+                  BREW
+                </Link>
               </motion.div>
             </div>
           </motion.div>
