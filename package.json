@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "auth:main": "node scripts/switch-auth.js main",
     "auth:clerk": "node scripts/switch-auth.js clerk",
     "auth:supabase": "node scripts/switch-auth.js supabase"
   },
