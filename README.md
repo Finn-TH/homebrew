@@ -50,11 +50,12 @@ git checkout feature/clerk-auth     # Test Clerk implementation
 git checkout feature/supabase-auth  # Test Supabase implementation
 ```
 
-### Switching Between Auth Providers
+### Switching Between Branches
 
 During testing, use our convenient switching script:
 
 ```bash
+pnpm auth:main     # Switch to clean main branch
 pnpm auth:clerk    # Switch to Clerk authentication
 pnpm auth:supabase # Switch to Supabase authentication
 ```
@@ -62,18 +63,19 @@ pnpm auth:supabase # Switch to Supabase authentication
 Add `--force` flag for a fresh start:
 
 ```bash
-pnpm auth:clerk --force    # Force fresh switch to Clerk
-pnpm auth:supabase --force # Force fresh switch to Supabase
+pnpm auth:main --force     # Force switch to clean main
+pnpm auth:clerk --force    # Force switch to Clerk
+pnpm auth:supabase --force # Force switch to Supabase
 ```
 
 The switching script will:
 
 - Check for uncommitted changes
-- Switch between feature branches
+- Switch between branches
 - Clean up build files
 - Reinstall dependencies
 
-> Note: Remember to update your `.env.local` with the appropriate variables for each auth provider.
+> Note: When switching to auth branches, remember to update your `.env.local` with the appropriate variables for each auth provider.
 
 ## Development
 
