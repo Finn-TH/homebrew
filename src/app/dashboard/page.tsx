@@ -17,6 +17,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { signOut } from "./actions";
+import UserMenu from "@/components/ui/user-menu";
 
 export default function Dashboard() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -86,31 +87,7 @@ export default function Dashboard() {
               Brewing in progress
             </div>
 
-            {user && (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  {user.user_metadata?.avatar_url && (
-                    <Image
-                      src={user.user_metadata.avatar_url}
-                      alt="Profile"
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
-                  )}
-                  <span className="text-sm text-[#8B4513]">
-                    {user.user_metadata?.full_name || user.email}
-                  </span>
-                </div>
-
-                <form action={signOut}>
-                  <button className="flex items-center gap-2 rounded-full bg-white/50 px-4 py-2 text-sm text-[#8B4513] hover:bg-white/70 transition-colors backdrop-blur-sm">
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                  </button>
-                </form>
-              </div>
-            )}
+            {user && <UserMenu user={user} />}
           </div>
         </div>
 
