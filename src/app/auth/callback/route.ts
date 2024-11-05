@@ -2,21 +2,21 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: Request) {
-  // Get the search params from the request URL
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  // Redirect to dashboard after successful login
   const next = searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      const providerToken = data.session?.provider_token;
+      const providerRefreshToken = data.session?.provider_refresh_token;
+
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
-      // Handle redirects based on environment
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${next}`);
       } else if (forwardedHost) {
@@ -27,6 +27,5 @@ export async function GET(request: Request) {
     }
   }
 
-  // If there's an error, redirect to error page
   return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }

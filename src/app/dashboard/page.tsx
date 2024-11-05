@@ -84,7 +84,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 rounded-full bg-white/50 px-4 py-2 text-sm text-[#8B4513] backdrop-blur-sm">
               <div className="h-2 w-2 rounded-full bg-green-500" />
-              Brewing in progress
+              Brewing in progress ☕️
             </div>
 
             {user && <UserMenu user={user} />}

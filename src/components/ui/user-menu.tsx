@@ -105,7 +105,7 @@ export default function UserMenu({ user }: UserMenuProps) {
             </span>
           </div>
           <div className="text-xs text-[#8B4513]/40 mt-1">
-            Happy brewing! ☕️
+            Thanks for brewing! ☕️
           </div>
         </div>
       </div>
