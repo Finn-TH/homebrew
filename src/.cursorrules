@@ -59,3 +59,73 @@ Follow these rules when you write code:
 - Use early returns for error conditions.
 - Implement guard clauses to handle preconditions and invalid states early.
 - Use custom error types for consistent error handling.
+
+### Design Philosophy
+
+- Maintain consistent theming while allowing creative flexibility
+- Current theme example (can be adapted):
+  - Primary: `#8B4513` (Coffee Brown)
+  - Secondary: `#A0522D` (Saddle Brown)
+  - Background: `#FDF6EC` (Cream)
+- Implement modern animation patterns:
+  - Use subtle, purposeful animations
+  - Consider performance impact
+  - Avoid repetitive or distracting effects
+
+### Next.js 15 Best Practices
+
+- Strictly follow Server Components architecture:
+  - Keep pages as Server Components by default
+  - Move interactive logic to Client Components
+  - Isolate client-side code to smallest possible components
+- Implement proper data fetching patterns:
+  - Prefer server-side data fetching
+  - Handle loading and error states elegantly
+  - Consider revalidation strategies
+
+### Component Structure
+
+- Follow feature-first organization:
+  ```
+  src/app/
+  ├── components/     # Shared components
+  ├── features/      # Feature-specific logic
+  ├── types/         # Type definitions
+  ├── utils/         # Utility functions
+  └── data/         # Static data
+  ```
+
+### UI/UX Guidelines
+
+- Prioritize modern, clean interfaces
+- Consider implementing:
+  - Glass-morphism effects where appropriate
+  - Micro-interactions for better user feedback
+  - Smooth transitions between states
+- Maintain visual hierarchy through:
+  - Consistent spacing
+  - Typography scale
+  - Color contrast
+- Allow for creative freedom in implementation
+
+### Performance Standards
+
+- Optimize initial page load
+- Implement proper loading states
+- Consider code splitting strategies
+- Monitor and optimize bundle size
+- Use appropriate image optimization
+
+### TypeScript Standards
+
+- Maintain strict type checking
+- Create dedicated type files
+- Use descriptive interface names
+- Avoid using 'any' type
+
+### Error Handling
+
+- Implement comprehensive error boundaries
+- Provide meaningful error messages
+- Consider fallback UI states
+- Log errors appropriately
