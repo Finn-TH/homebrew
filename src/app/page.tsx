@@ -4,7 +4,6 @@ import { useState } from "react";
 import LoginModal from "@/components/login-modal";
 import { motion } from "framer-motion";
 import { Coffee, LayoutDashboard, Brain, PiggyBank, Heart } from "lucide-react";
-import Link from "next/link";
 
 export default function Home() {
   const [showLoginModal, setShowLoginModal] = useState(false);

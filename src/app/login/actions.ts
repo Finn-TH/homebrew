@@ -3,6 +3,48 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
+export async function signInWithEmail(formData: FormData) {
+  const supabase = await createClient();
+
+  const data = {
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
+  };
+
+  const { error } = await supabase.auth.signInWithPassword(data);
+
+  if (error) {
+    console.error("Error signing in:", error);
+    return redirect("/auth/auth-code-error");
+  }
+
+  return redirect("/dashboard");
+}
+
+export async function signUpWithEmail(formData: FormData) {
+  const supabase = await createClient();
+
+  const data = {
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
+  };
+
+  const { error } = await supabase.auth.signUp({
+    ...data,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+    },
+  });
+
+  if (error) {
+    console.error("Error signing up:", error);
+    return redirect("/auth/auth-code-error");
+  }
+
+  // Redirect to a "check your email" page
+  return redirect("/auth/verify-email");
+}
+
 export async function signInWithGithub() {
   const supabase = await createClient();
 

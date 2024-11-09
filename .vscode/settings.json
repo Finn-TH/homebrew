@@ -1,3 +1,11 @@
 {
-  "cSpell.words": ["googleusercontent", "Signin"]
+  "cSpell.words": [
+    "fullname",
+    "googleusercontent",
+    "searchbar",
+    "Signin",
+    "signout",
+    "Signup",
+    "upsert"
+  ]
 }
