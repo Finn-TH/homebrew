@@ -72,7 +72,7 @@ export default function Dashboard() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-12 flex items-center justify-between">
           <Link
-            href="/dashboard"
+            href="/"
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <Coffee className="h-8 w-8 text-[#8B4513]" />
