@@ -6,7 +6,7 @@ import {
   signInWithGoogle,
   signInWithEmail,
   signUpWithEmail,
-} from "@/app/login/actions";
+} from "@/app/actions/auth";
 import Modal from "@/components/ui/modal";
 import { useState } from "react";
 

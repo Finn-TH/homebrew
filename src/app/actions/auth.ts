@@ -6,15 +6,15 @@ import { redirect } from "next/navigation";
 export async function signInWithEmail(formData: FormData) {
   const supabase = await createClient();
 
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
-    console.error("Error signing in:", error);
     return redirect("/auth/auth-code-error");
   }
 
@@ -24,28 +24,25 @@ export async function signInWithEmail(formData: FormData) {
 export async function signUpWithEmail(formData: FormData) {
   const supabase = await createClient();
 
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
 
   const { error } = await supabase.auth.signUp({
-    ...data,
+    email,
+    password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
   });
 
   if (error) {
-    console.error("Error signing up:", error);
     return redirect("/auth/auth-code-error");
   }
 
-  // Redirect to a "check your email" page
-  return redirect("/auth/verify-email");
+  return redirect("/dashboard");
 }
 
-export async function signInWithGithub() {
+export async function signInWithGithub(formData: FormData) {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -56,36 +53,29 @@ export async function signInWithGithub() {
   });
 
   if (error) {
-    console.error("OAuth error:", error);
-    throw error;
+    return redirect("/auth/auth-code-error");
   }
 
   if (data.url) {
-    redirect(data.url);
+    return redirect(data.url);
   }
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      queryParams: {
-        access_type: "offline",
-        prompt: "consent",
-      },
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-      scopes: "email profile",
     },
   });
 
   if (error) {
-    console.error("OAuth error:", error);
-    throw error;
+    return redirect("/auth/auth-code-error");
   }
 
   if (data.url) {
-    redirect(data.url);
+    return redirect(data.url);
   }
 }
