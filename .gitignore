@@ -37,8 +37,10 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
-.DS_Store        # macOS system files
-*.pem            # SSL certificates
+.DS_Store        
+# macOS system files
+*.pem            
+# SSL certificates
 
 # TypeScript (generated type definitions)
 *.tsbuildinfo

@@ -4,9 +4,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "@supabase/supabase-js";
 import UserMenu from "@/components/ui/user-menu";
-import { defaultFeatures } from "../data/features";
+import { defaultFeatures } from "../../data/features";
 import Link from "next/link";
-import { FeatureGridProps } from "../types"; // Correct path
+import { FeatureGridProps } from "../../types";
 
 export function FeatureGrid({ user, initialPreferences }: FeatureGridProps) {
   const [preferences, setPreferences] = useState(
@@ -51,7 +51,7 @@ export function FeatureGrid({ user, initialPreferences }: FeatureGridProps) {
       <AnimatePresence mode="popLayout">
         {defaultFeatures.map((feature) => {
           const Icon = feature.icon;
-          const href = `/dashboard/${feature.id.toLowerCase()}`;
+          const href = `/dashboard/features/${feature.id.toLowerCase()}`;
 
           return (
             <Link href={href} key={feature.id} className="block h-full">
