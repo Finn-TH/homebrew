@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { FeatureGrid } from "@/app/dashboard/components/feature-card";
+import { FeatureGrid } from "@/app/dashboard/components/ui/feature-card";
 import { Coffee } from "lucide-react";
 import UserMenu from "@/components/ui/user-menu";
 import Link from "next/link";

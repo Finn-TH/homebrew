@@ -1,4 +1,4 @@
-import FeatureLayout from "@/app/dashboard/components/feature-layout";
+import FeatureLayout from "@/app/dashboard/components/layout/feature-layout";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function TodoPage() {
