@@ -7,30 +7,46 @@
 
 ## Architecture Evolution
 
-### Server vs Client Components Refactor (2024)
+### Feature-First Architecture Implementation (2024)
 
-The dashboard underwent a significant architectural change from a single client-side component to a more optimized server-first approach:
+Restructured the application to follow Feature-First Architecture:
 
-**Previous Structure (Client-Side)**:
+**Previous Structure**:
 
-- Entire dashboard was client-side rendered.
-- All data fetching happened on the client.
-- Heavier JavaScript bundle size.
+- Flat component hierarchy
+- Mixed concerns between features
+- Unclear boundaries between features
 
-**Current Structure (Server-First)**:
+**Current Structure**:
 
-- Main dashboard is a Server Component.
-- Data fetching moved to server-side.
-- Client components isolated to interactive features only.
-- Reduced JavaScript bundle size.
-- Better initial page load performance.
+- Features organized in dedicated directories
+- Clear separation of concerns
+- Self-contained feature modules
+- Proper use of Next.js 15 layouts
+- Optimized server/client component split
 
 ### Component Organization
 
-- Features data separated into dedicated files.
-- Proper TypeScript interfaces implemented.
-- Clear separation between server and client logic.
-- Follows Next.js 15 best practices for folder structure.
+- Features live in `/dashboard/features/`
+- Each feature has its own:
+  - `page.tsx` (Server Component)
+  - Feature-specific components
+  - Supabase data fetching
+  - Consistent styling patterns
+
+### Authentication Integration
+
+- Moved auth components into app directory
+- Integrated with Supabase auth
+- User-specific data fetching per feature
+- Proper session management
+
+### Performance Optimizations
+
+- Server-first approach
+- Partial rendering through layouts
+- Optimized data fetching
+- Reduced client-side JavaScript
 
 ## Design System
 

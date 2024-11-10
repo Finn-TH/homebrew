@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import LoginModal from "@/components/login-modal";
+import LoginModal from "@/app/components/auth/login-modal";
 import { motion } from "framer-motion";
 import { Coffee, LayoutDashboard, Brain, PiggyBank, Heart } from "lucide-react";
 

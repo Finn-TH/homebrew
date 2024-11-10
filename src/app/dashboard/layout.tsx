@@ -1,27 +1,33 @@
 import { Coffee } from "lucide-react";
 import UserMenu from "@/app/components/ui/user-menu";
 import Link from "next/link";
-import { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/server";
 
-interface FeatureLayoutProps {
-  children: React.ReactNode;
-  user: User | null;
-  title: string;
-}
-
-export default function FeatureLayout({
+export default async function DashboardLayout({
   children,
-  user,
-  title,
-}: FeatureLayoutProps) {
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-[#FDF6EC]">
+      {/* Background circles */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -left-4 top-1/4 h-64 w-64 rounded-full bg-[#8B4513]/5 blur-3xl animate-pulse-slow" />
+        <div className="absolute right-0 top-1/3 h-96 w-96 rounded-full bg-[#D2691E]/5 blur-3xl animate-pulse-slow delay-300" />
+        <div className="absolute bottom-1/4 left-1/3 h-48 w-48 rounded-full bg-[#A0522D]/5 blur-3xl animate-pulse-slow delay-500" />
+      </div>
+
+      {/* Header */}
       <div className="relative">
         <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
           <Link
             href="/dashboard"
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
-            aria-label="Return to Dashboard"
           >
             <Coffee className="h-8 w-8 text-[#8B4513] animate-spin-slow" />
             <span className="text-2xl font-bold text-[#8B4513]">
@@ -38,12 +44,8 @@ export default function FeatureLayout({
         </nav>
       </div>
 
-      <div className="relative mx-auto max-w-7xl p-8">
-        <h1 className="text-3xl font-bold text-[#8B4513] mb-6">{title}</h1>
-        <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-          {children}
-        </div>
-      </div>
+      {/* Content */}
+      {children}
     </div>
   );
 }

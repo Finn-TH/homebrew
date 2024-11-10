@@ -7,7 +7,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
 } from "@/app/actions/auth";
-import Modal from "@/components/ui/modal";
+import Modal from "@/app/components/ui/modal";
 import { useState } from "react";
 
 interface LoginModalProps {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "@supabase/supabase-js";
-import UserMenu from "@/components/ui/user-menu";
+import UserMenu from "@/app/components/ui/user-menu";
 import { defaultFeatures } from "../../data/features";
 import Link from "next/link";
 import { FeatureGridProps } from "../../types";
