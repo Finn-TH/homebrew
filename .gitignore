@@ -1,6 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies (automatically installed via package manager)
 /node_modules
 /.pnp
 .pnp.*
@@ -10,38 +10,46 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# Testing (coverage reports and test artifacts)
 /coverage
 
-# next.js
+# Next.js and Build Output (generated files)
 /.next/
 /out/
-
-# production
 /build
 
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# env files (can opt-in for commiting if needed)
+# Environment Variables (sensitive credentials)
 .env*
 .env
 .env*.local
-# local env files
-# do not commit any .env files to git, except for the .env.example file. https://create.t3.gg/en/usage/env-variables#using-environment-variables
+!.env.example
+# Do not commit any .env files to git, except for the .env.example file
+# https://create.t3.gg/en/usage/env-variables#using-environment-variables
 
-# vercel
-.vercel
+# Debug Logs (local debugging information)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# typescript
+# IDE and Editor Files (personal settings)
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store        
+# macOS system files
+*.pem            
+# SSL certificates
+
+# TypeScript (generated type definitions)
 *.tsbuildinfo
 next-env.d.ts
 
-# idea files
-.idea
+# Vercel (deployment metadata)
+.vercel
+
+# Cache and Temporary Files (local performance optimizations)
+.cache
+.temp
+Thumbs.db        # Windows image cache

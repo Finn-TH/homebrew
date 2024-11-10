@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import LoginModal from "@/app/components/auth/login-modal";
 import { motion } from "framer-motion";
 import { Coffee, LayoutDashboard, Brain, PiggyBank, Heart } from "lucide-react";
-import Link from "next/link";
 
 export default function Home() {
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   const features = [
     {
       icon: LayoutDashboard,
@@ -66,12 +69,12 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
                 className="inline-block"
               >
-                <Link
-                  href="/dashboard"
+                <button
+                  onClick={() => setShowLoginModal(true)}
                   className="rounded-full bg-[#8B4513] px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-[#A0522D]"
                 >
                   BREW
-                </Link>
+                </button>
               </motion.div>
             </div>
           </motion.div>
@@ -106,6 +109,11 @@ export default function Home() {
           </motion.div>
         </main>
       </div>
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 }
