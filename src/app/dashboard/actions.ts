@@ -8,10 +8,15 @@ export async function signOut() {
 
   try {
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    redirect("/");
+    if (error) {
+      console.error("Supabase sign out error:", error);
+      throw error;
+    }
   } catch (error) {
     console.error("Error signing out:", error);
     throw error;
   }
+
+  // Perform redirect outside of try-catch
+  redirect("/");
 }
