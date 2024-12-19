@@ -4,7 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronRight, Check, Settings2 } from "lucide-react";
 import { useState } from "react";
 import { Fragment } from "react";
-import { FilterOption, SortOption, FilterOptionItem } from "../types";
+import { FilterOption, SortOption, FilterOptionItem } from "../../types";
 import {
   ListIcon,
   CircleIcon,

@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from "react";
 import TodoItem from "./todo-item";
-import TodoFilters from "./todo-filters";
+import TodoFilters from "./filters/todo-filters";
 import { Todo, FilterOption, SortOption, Priority } from "../types";
 import { Trash2, Check, Square, CheckSquare, X } from "lucide-react";
 import { deleteTodo, toggleTodo, updatePriority } from "../actions";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { QuickFilters } from "./quick-filters";
+import { QuickFilters } from "./filters/quick-filters";
 import { ActiveView } from "./active-view";
 
 const priorities: {

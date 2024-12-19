@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import TodoList from "./components/todo-list";
-import AddTodoForm from "./components/add-todo-form";
+import AddTodoButton from "./components/add-todo/add-todo-button";
 import FeatureLayout from "../../components/layout/feature-layout";
 import { Todo } from "./types";
 
@@ -19,7 +19,7 @@ export default async function TodoPage() {
   return (
     <FeatureLayout user={user} title="Todo List">
       <div className="space-y-6">
-        <AddTodoForm />
+        <AddTodoButton />
         <TodoList todos={todos || []} />
       </div>
     </FeatureLayout>

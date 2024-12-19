@@ -1,5 +1,5 @@
 import { CalendarClock, AlertCircle } from "lucide-react";
-import { FilterOption } from "../types";
+import { FilterOption } from "../../types";
 
 interface QuickFiltersProps {
   onFilterChange: (filter: FilterOption) => void;
