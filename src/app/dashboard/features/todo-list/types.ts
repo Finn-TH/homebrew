@@ -29,7 +29,7 @@ interface FilterGroup {
 
 export type FilterOptionItem = FilterItem | FilterGroup;
 
-export type SortOption = "newest" | "oldest" | "priority" | "alphabetical";
+export type SortOption = "newest" | "priority" | "alphabetical" | "due-date";
 
 export interface Todo {
   id: string;

@@ -13,6 +13,10 @@ import {
   AlertCircleIcon,
   CalendarClockIcon,
   CalendarXIcon,
+  CalendarClock,
+  ArrowUpCircle,
+  Clock,
+  Text,
 } from "lucide-react";
 
 interface TodoFiltersProps {
@@ -79,10 +83,30 @@ const filterOptions: FilterOptionItem[] = [
 ];
 
 const sortOptions = [
-  { value: "newest", label: "Newest First" },
-  { value: "oldest", label: "Oldest First" },
-  { value: "priority", label: "Priority" },
-  { value: "alphabetical", label: "Alphabetical" },
+  {
+    value: "due-date",
+    label: "Due Date",
+    icon: <CalendarClock className="h-4 w-4" />,
+    description: "Sort by upcoming deadlines",
+  },
+  {
+    value: "priority",
+    label: "Priority",
+    icon: <ArrowUpCircle className="h-4 w-4" />,
+    description: "High to low priority",
+  },
+  {
+    value: "newest",
+    label: "Recently Added",
+    icon: <Clock className="h-4 w-4" />,
+    description: "Newest tasks first",
+  },
+  {
+    value: "alphabetical",
+    label: "Alphabetical",
+    icon: <Text className="h-4 w-4" />,
+    description: "A to Z",
+  },
 ] as const;
 
 export default function TodoFilters({
@@ -202,20 +226,28 @@ export default function TodoFilters({
 
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
-                className="min-w-[8rem] overflow-hidden rounded-md border 
-                         border-[#8B4513]/10 bg-white p-1 shadow-md"
+                className="z-50 min-w-[220px] overflow-hidden rounded-md border 
+                         border-[#8B4513]/10 bg-white p-1.5 shadow-md"
               >
-                {sortOptions.map((option) => (
+                {sortOptions.map(({ value, label, icon, description }) => (
                   <DropdownMenu.Item
-                    key={option.value}
-                    onClick={() => onSortChange(option.value)}
-                    className="flex items-center justify-between px-2 py-1.5 text-sm 
-                             outline-none cursor-pointer text-[#8B4513] 
-                             hover:bg-[#8B4513]/5 rounded-sm"
+                    key={value}
+                    onClick={() => onSortChange(value)}
+                    className={`flex items-center px-2 py-2 text-sm outline-none cursor-pointer
+                              rounded-sm hover:bg-[#8B4513]/5 text-[#8B4513]
+                              ${currentSort === value ? "bg-[#8B4513]/5" : ""}`}
                   >
-                    {option.label}
-                    {currentSort === option.value && (
-                      <Check className="h-4 w-4" />
+                    <div className="flex items-center gap-2 flex-1">
+                      {icon}
+                      <div>
+                        <div className="font-medium">{label}</div>
+                        <div className="text-xs text-[#8B4513]/60">
+                          {description}
+                        </div>
+                      </div>
+                    </div>
+                    {currentSort === value && (
+                      <Check className="h-4 w-4 text-[#8B4513]" />
                     )}
                   </DropdownMenu.Item>
                 ))}

@@ -69,6 +69,34 @@ const filterTodos = (todos: Todo[], filter: FilterOption) => {
   });
 };
 
+const sortTodos = (todos: Todo[], sort: SortOption) => {
+  const sortedTodos = [...todos];
+
+  switch (sort) {
+    case "due-date":
+      return sortedTodos.sort((a, b) => {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+      });
+    case "priority": {
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      return sortedTodos.sort(
+        (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+      );
+    }
+    case "alphabetical":
+      return sortedTodos.sort((a, b) => a.title.localeCompare(b.title));
+    case "newest":
+      return sortedTodos.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    default:
+      return sortedTodos;
+  }
+};
+
 export default function TodoList({ todos }: { todos: Todo[] }) {
   const [selectedTodos, setSelectedTodos] = useState<string[]>([]);
   const [completedTodos, setCompletedTodos] = useState<Set<string>>(
@@ -156,23 +184,7 @@ export default function TodoList({ todos }: { todos: Todo[] }) {
 
   const filteredTodos = filterTodos(todos, currentFilter);
 
-  const filteredAndSortedTodos = filteredTodos.sort((a, b) => {
-    switch (currentSort) {
-      case "oldest":
-        return (
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-      case "priority":
-        const priority = { high: 3, medium: 2, low: 1 };
-        return priority[b.priority] - priority[a.priority];
-      case "alphabetical":
-        return a.title.localeCompare(b.title);
-      default: // newest
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-    }
-  });
+  const filteredAndSortedTodos = sortTodos(filteredTodos, currentSort);
 
   const selectedItems = todos.filter((todo) => selectedTodos.includes(todo.id));
   const allSelectedCompleted =
@@ -214,6 +226,15 @@ export default function TodoList({ todos }: { todos: Todo[] }) {
         currentFilter={currentFilter}
         onClear={() => setCurrentFilter("all")}
       />
+
+      {/* Add column headers */}
+      <div className="flex items-center justify-between px-4 mb-2 text-sm text-[#8B4513]/40">
+        <div className="flex-1">Task</div>
+        <div className="flex items-center gap-12 mr-4">
+          <span>Due Date</span>
+          <span>Priority</span>
+        </div>
+      </div>
 
       {/* Show message when no tasks match filter */}
       {todos.length === 0 && currentFilter !== "all" && (

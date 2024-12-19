@@ -4,23 +4,26 @@ import { useState } from "react";
 import { Priority } from "../types";
 import { addTodo } from "../actions";
 import { TodoDatePicker } from "./date-picker";
-import { Circle, X } from "lucide-react";
+import { ArrowDownCircle, MinusCircle, ArrowUpCircle, X } from "lucide-react";
 
 const priorities = [
   {
     value: "low",
-    label: "Low",
-    className: "text-green-600 bg-green-50 hover:bg-green-100",
+    icon: <ArrowDownCircle className="h-4 w-4" />,
+    className: "text-green-600 hover:bg-green-50",
+    ariaLabel: "Low Priority",
   },
   {
     value: "medium",
-    label: "Medium",
-    className: "text-yellow-600 bg-yellow-50 hover:bg-yellow-100",
+    icon: <MinusCircle className="h-4 w-4" />,
+    className: "text-yellow-600 hover:bg-yellow-50",
+    ariaLabel: "Medium Priority",
   },
   {
     value: "high",
-    label: "High",
-    className: "text-red-600 bg-red-50 hover:bg-red-100",
+    icon: <ArrowUpCircle className="h-4 w-4" />,
+    className: "text-red-600 hover:bg-red-50",
+    ariaLabel: "High Priority",
   },
 ] as const;
 
@@ -51,21 +54,22 @@ export default function AddTodoForm() {
         <TodoDatePicker selectedDate={dueDate} onDateChange={setDueDate} />
 
         {/* Existing priority buttons */}
-        <div className="flex gap-2">
-          {priorities.map(({ value, label, className }) => (
+        <div className="flex gap-1.5">
+          {priorities.map(({ value, icon, className, ariaLabel }) => (
             <button
               key={value}
               type="button"
+              aria-label={ariaLabel}
               onClick={() => setPriority(value)}
-              className={`px-3 py-1.5 rounded-md text-sm transition-colors
+              className={`p-1.5 rounded-md transition-colors
                         ${className}
                         ${
                           priority === value
-                            ? "ring-1 ring-inset ring-current"
-                            : "opacity-60 hover:opacity-100"
+                            ? "bg-current/10 ring-1 ring-current"
+                            : "opacity-40 hover:opacity-100"
                         }`}
             >
-              {label}
+              {icon}
             </button>
           ))}
         </div>
