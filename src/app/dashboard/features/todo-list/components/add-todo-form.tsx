@@ -3,73 +3,101 @@
 import { useState } from "react";
 import { Priority } from "../types";
 import { addTodo } from "../actions";
-import { Circle } from "lucide-react";
+import { TodoDatePicker } from "./date-picker";
+import { Circle, X } from "lucide-react";
 
-const priorities: { value: Priority; label: string; color: string }[] = [
+const priorities = [
   {
     value: "low",
     label: "Low",
-    color: "text-green-600 bg-green-50 border-green-200 hover:bg-green-100",
+    className: "text-green-600 bg-green-50 hover:bg-green-100",
   },
   {
     value: "medium",
     label: "Medium",
-    color: "text-yellow-600 bg-yellow-50 border-yellow-200 hover:bg-yellow-100",
+    className: "text-yellow-600 bg-yellow-50 hover:bg-yellow-100",
   },
   {
     value: "high",
     label: "High",
-    color: "text-red-600 bg-red-50 border-red-200 hover:bg-red-100",
+    className: "text-red-600 bg-red-50 hover:bg-red-100",
   },
-];
+] as const;
 
 export default function AddTodoForm() {
   const [priority, setPriority] = useState<Priority>("medium");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+
+  const handleSubmit = async (formData: FormData) => {
+    if (dueDate) {
+      formData.append("due_date", dueDate.toISOString());
+    }
+    await addTodo(formData);
+    setDueDate(null);
+  };
 
   return (
-    <form action={addTodo} className="space-y-4">
-      <div className="flex gap-2">
+    <form action={handleSubmit} className="space-y-3">
+      <div className="flex items-center gap-2">
         <input
           type="text"
           name="title"
-          placeholder="Add a new task..."
-          className="flex-1 rounded-lg border border-[#8B4513]/20 bg-white/50 px-4 py-2 
-                   text-[#8B4513] placeholder-[#8B4513]/40"
+          placeholder="Add a task..."
+          className="flex-1 rounded-lg border border-[#8B4513]/10 px-4 py-2 
+                   focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
           required
         />
 
-        {/* Hidden input for form submission */}
-        <input type="hidden" name="priority" value={priority} />
+        <TodoDatePicker selectedDate={dueDate} onDateChange={setDueDate} />
 
-        {/* Priority selector buttons */}
-        <div className="flex gap-1 items-center">
-          {priorities.map(({ value, label, color }) => (
+        {/* Existing priority buttons */}
+        <div className="flex gap-2">
+          {priorities.map(({ value, label, className }) => (
             <button
               key={value}
               type="button"
               onClick={() => setPriority(value)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border 
-                        transition-all duration-200 ${color}
-                        ${priority === value ? "ring-2 ring-offset-1" : ""}`}
+              className={`px-3 py-1.5 rounded-md text-sm transition-colors
+                        ${className}
+                        ${
+                          priority === value
+                            ? "ring-1 ring-inset ring-current"
+                            : "opacity-60 hover:opacity-100"
+                        }`}
             >
-              <Circle
-                className={`h-3 w-3 ${
-                  priority === value ? "fill-current" : ""
-                }`}
-              />
-              <span className="text-sm font-medium">{label}</span>
+              {label}
             </button>
           ))}
         </div>
 
         <button
           type="submit"
-          className="rounded-lg bg-[#8B4513] px-4 py-2 text-white hover:bg-[#A0522D]
-                   transition-colors whitespace-nowrap"
+          className="rounded-lg bg-[#FDF6EC] px-4 py-2 text-[#8B4513] font-medium
+                   hover:bg-[#FFE4C4] border border-[#8B4513]/10
+                   transition-colors disabled:opacity-50"
         >
           Add
         </button>
       </div>
+
+      {/* Show selected date if any */}
+      {dueDate && (
+        <div className="flex items-center gap-2 text-sm text-[#8B4513]/60">
+          <span>
+            {dueDate.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setDueDate(null)}
+            className="hover:text-[#8B4513]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </form>
   );
 }

@@ -7,6 +7,8 @@ import { Todo, FilterOption, SortOption, Priority } from "../types";
 import { Trash2, Check, Square, CheckSquare, X } from "lucide-react";
 import { deleteTodo, toggleTodo, updatePriority } from "../actions";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { QuickFilters } from "./quick-filters";
+import { ActiveView } from "./active-view";
 
 const priorities: {
   value: Priority;
@@ -33,6 +35,39 @@ const priorities: {
     bgColor: "bg-red-100",
   },
 ];
+
+const filterTodos = (todos: Todo[], filter: FilterOption) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return todos.filter((todo) => {
+    switch (filter) {
+      case "all":
+        return true;
+      case "active":
+        return !todo.completed;
+      case "completed":
+        return todo.completed;
+      case "high":
+      case "medium":
+      case "low":
+        return todo.priority === filter;
+      case "overdue":
+        return todo.due_date && new Date(todo.due_date) < today;
+      case "due-today": {
+        if (!todo.due_date) return false;
+        const dueDate = new Date(todo.due_date);
+        return dueDate.toDateString() === today.toDateString();
+      }
+      case "upcoming":
+        return todo.due_date && new Date(todo.due_date) > today;
+      case "no-date":
+        return !todo.due_date;
+      default:
+        return true;
+    }
+  });
+};
 
 export default function TodoList({ todos }: { todos: Todo[] }) {
   const [selectedTodos, setSelectedTodos] = useState<string[]>([]);
@@ -119,29 +154,25 @@ export default function TodoList({ todos }: { todos: Todo[] }) {
     });
   };
 
-  const filteredAndSortedTodos = todos
-    .filter((todo) => {
-      if (currentFilter === "active") return !completedTodos.has(todo.id);
-      if (currentFilter === "completed") return completedTodos.has(todo.id);
-      return true;
-    })
-    .sort((a, b) => {
-      switch (currentSort) {
-        case "oldest":
-          return (
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          );
-        case "priority":
-          const priority = { high: 3, medium: 2, low: 1 };
-          return priority[b.priority] - priority[a.priority];
-        case "alphabetical":
-          return a.title.localeCompare(b.title);
-        default: // newest
-          return (
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
-      }
-    });
+  const filteredTodos = filterTodos(todos, currentFilter);
+
+  const filteredAndSortedTodos = filteredTodos.sort((a, b) => {
+    switch (currentSort) {
+      case "oldest":
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      case "priority":
+        const priority = { high: 3, medium: 2, low: 1 };
+        return priority[b.priority] - priority[a.priority];
+      case "alphabetical":
+        return a.title.localeCompare(b.title);
+      default: // newest
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+    }
+  });
 
   const selectedItems = todos.filter((todo) => selectedTodos.includes(todo.id));
   const allSelectedCompleted =
@@ -154,8 +185,43 @@ export default function TodoList({ todos }: { todos: Todo[] }) {
     completedTodos.has(todo.id)
   );
 
+  // Calculate task counts
+  const overdueTasks = todos.filter((todo) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return todo.due_date && new Date(todo.due_date) < today && !todo.completed;
+  }).length;
+
+  const todayTasks = todos.filter((todo) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return (
+      todo.due_date &&
+      new Date(todo.due_date).toDateString() === today.toDateString() &&
+      !todo.completed
+    );
+  }).length;
+
   return (
     <div className="space-y-4">
+      <QuickFilters
+        onFilterChange={setCurrentFilter}
+        overdueTasks={overdueTasks}
+        todayTasks={todayTasks}
+      />
+
+      <ActiveView
+        currentFilter={currentFilter}
+        onClear={() => setCurrentFilter("all")}
+      />
+
+      {/* Show message when no tasks match filter */}
+      {todos.length === 0 && currentFilter !== "all" && (
+        <div className="text-center py-8 text-[#8B4513]/40">
+          No tasks match the current filter
+        </div>
+      )}
+
       {/* Only show the options menu when no items are selected */}
       {selectedTodos.length === 0 && (
         <TodoFilters

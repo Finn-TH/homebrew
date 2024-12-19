@@ -3,7 +3,13 @@
 import { useState, useTransition, useEffect } from "react";
 import { Todo, Priority } from "../types";
 import { toggleTodo, deleteTodo, updatePriority } from "../actions";
-import { Trash2, Circle, CheckCircle, CheckCircle2 } from "lucide-react";
+import {
+  Trash2,
+  Circle,
+  CheckCircle,
+  CheckCircle2,
+  Calendar,
+} from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 const priorities: {
@@ -76,6 +82,18 @@ export default function TodoItem({
 
   const currentPriority = priorities.find((p) => p.value === todo.priority);
 
+  const getDueDateStyle = (dueDate: string) => {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffDays = Math.ceil(
+      (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffDays < 0) return "text-red-500"; // overdue
+    if (diffDays <= 2) return "text-orange-500"; // due soon
+    return "text-[#8B4513]/60"; // upcoming
+  };
+
   return (
     <li
       className={`group flex items-center justify-between rounded-lg border p-4 
@@ -112,6 +130,20 @@ export default function TodoItem({
         >
           {todo.title}
         </span>
+
+        {todo.due_date && (
+          <span
+            className={`flex items-center gap-1.5 text-sm ${getDueDateStyle(
+              todo.due_date
+            )}`}
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            {new Date(todo.due_date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+          </span>
+        )}
 
         <DropdownMenu.Root
           open={priorityMenuOpen}

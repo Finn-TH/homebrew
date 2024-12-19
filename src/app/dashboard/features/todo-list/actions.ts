@@ -8,6 +8,7 @@ export async function addTodo(formData: FormData): Promise<void> {
   try {
     const title = formData.get("title") as string;
     const priority = formData.get("priority") as Priority;
+    const dueDate = formData.get("due_date") as string | null;
 
     if (!title?.trim()) {
       throw new Error("Title is required");
@@ -27,6 +28,7 @@ export async function addTodo(formData: FormData): Promise<void> {
         title: title.trim(),
         user_id: user.id,
         priority: priority || "medium",
+        due_date: dueDate,
       },
     ]);
 

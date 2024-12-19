@@ -85,32 +85,15 @@ Follow these rules when you write code:
 
 ### Component Structure
 
-- Follow feature-first organization for major features:
+- Follow feature-first organization:
   ```
   src/app/
-  ├── components/     # Truly shared/reusable components
-  ├── features/      # Large, complex features with multiple components
-  │   └── todo-list/ # Example of a complex feature
-  │       ├── components/  # Feature-specific components
-  │       ├── actions.ts   # Server actions
-  │       └── types.ts     # Type definitions
-  ├── lib/          # Shared utilities and hooks
-  └── types/        # Global type definitions
+  ├── components/     # Shared components
+  ├── features/      # Feature-specific logic
+  ├── types/         # Type definitions
+  ├── utils/         # Utility functions
+  └── data/         # Static data
   ```
-
-- Guidelines for component organization:
-  1. Keep components together if they are tightly coupled
-  2. Split into separate files when:
-     - Component is complex or large (>100 lines)
-     - Component is reused across features
-     - Component has its own state management
-  3. Smaller, feature-specific components can live in the same file
-  4. Loading/error states can be inline unless complex
-
-- Avoid over-optimization:
-  - Don't create separate files just for type definitions if they're only used in one place
-  - Keep related small components in the same file
-  - Consider co-location over strict separation
 
 ### UI/UX Guidelines
 
@@ -124,6 +107,47 @@ Follow these rules when you write code:
   - Typography scale
   - Color contrast
 - Allow for creative freedom in implementation
+
+### UI/UX Preferences
+
+#### Multi-Select Patterns
+
+- Consider these elements for multi-select interfaces:
+  - Clean, minimal selection indicators
+  - Easy bulk-selection clearing
+  - Contextual actions toolbar
+  - Dynamic UI that adapts to selection state
+
+#### Interactive Elements
+
+- Preferred dropdown behaviors:
+  - Hover-away closing for better UX
+  - Auto-close on meaningful actions
+  - Event isolation when nested
+- Adapt based on context and user needs
+
+#### State Management Philosophy
+
+- Prefer keeping state close to usage
+- Consider optimistic updates when appropriate
+- Aim for meaningful default states
+- Balance between local and global state
+
+#### Color Usage Guidelines
+
+- Consider using opacity variants for interactive states
+- Suggested color hierarchy:
+  - Solid colors for primary actions
+  - Subtle variants for secondary elements
+  - Clear danger/success indicators
+- Maintain accessibility in color choices
+
+#### Component Styling Preferences
+
+- Aim for consistent padding/spacing within component families
+- Consider including icons for better visual feedback
+- Balance between minimal and informative UI
+- Adapt styling based on component context and usage
 
 ### Performance Standards
 
