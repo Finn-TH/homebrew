@@ -62,3 +62,25 @@ export async function deleteTodo(id: string) {
   await supabase.from("todos").delete().eq("id", id);
   revalidatePath("/dashboard/features/todo-list");
 }
+
+export async function updatePriority(
+  id: string,
+  priority: Priority
+): Promise<Todo | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("todos")
+    .update({ priority })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Failed to update priority:", error);
+    throw error;
+  }
+
+  revalidatePath("/dashboard/features/todo-list");
+  return data as Todo;
+}

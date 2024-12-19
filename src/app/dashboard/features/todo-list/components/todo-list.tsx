@@ -3,22 +3,46 @@
 import { useState, useTransition } from "react";
 import TodoItem from "./todo-item";
 import TodoFilters from "./todo-filters";
-import { Todo } from "../types";
-import { Trash2, Check, Square, CheckSquare } from "lucide-react";
-import { deleteTodo, toggleTodo } from "../actions";
+import { Todo, FilterOption, SortOption, Priority } from "../types";
+import { Trash2, Check, Square, CheckSquare, X } from "lucide-react";
+import { deleteTodo, toggleTodo, updatePriority } from "../actions";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+
+const priorities: {
+  value: Priority;
+  label: string;
+  color: string;
+  bgColor: string;
+}[] = [
+  {
+    value: "low",
+    label: "Low",
+    color: "text-green-600",
+    bgColor: "bg-green-100",
+  },
+  {
+    value: "medium",
+    label: "Medium",
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-100",
+  },
+  {
+    value: "high",
+    label: "High",
+    color: "text-red-600",
+    bgColor: "bg-red-100",
+  },
+];
 
 export default function TodoList({ todos }: { todos: Todo[] }) {
   const [selectedTodos, setSelectedTodos] = useState<string[]>([]);
   const [completedTodos, setCompletedTodos] = useState<Set<string>>(
     new Set(todos.filter((todo) => todo.completed).map((todo) => todo.id))
   );
-  const [currentFilter, setCurrentFilter] = useState<
-    "all" | "active" | "completed"
-  >("all");
-  const [currentSort, setCurrentSort] = useState<
-    "newest" | "oldest" | "priority" | "alphabetical"
-  >("newest");
+  const [currentFilter, setCurrentFilter] = useState<FilterOption>("all");
+  const [currentSort, setCurrentSort] = useState<SortOption>("newest");
   const [isPending, startTransition] = useTransition();
+  const [bulkPriorityOpen, setBulkPriorityOpen] = useState(false);
 
   const handleSelect = (id: string) => {
     setSelectedTodos((prev) =>
@@ -80,6 +104,21 @@ export default function TodoList({ todos }: { todos: Todo[] }) {
     });
   };
 
+  const handleBulkPriorityChange = (newPriority: Priority) => {
+    startTransition(async () => {
+      try {
+        await Promise.all(
+          selectedTodos.map((id) => updatePriority(id, newPriority))
+        );
+        // Update local state if needed
+        setSelectedTodos([]); // Clear selection after update
+        setBulkPriorityOpen(false);
+      } catch (error) {
+        console.error("Failed to update priorities:", error);
+      }
+    });
+  };
+
   const filteredAndSortedTodos = todos
     .filter((todo) => {
       if (currentFilter === "active") return !completedTodos.has(todo.id);
@@ -117,73 +156,93 @@ export default function TodoList({ todos }: { todos: Todo[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      {/* Only show the options menu when no items are selected */}
+      {selectedTodos.length === 0 && (
         <TodoFilters
           onFilterChange={setCurrentFilter}
           onSortChange={setCurrentSort}
           currentFilter={currentFilter}
           currentSort={currentSort}
         />
+      )}
 
-        {selectedTodos.length > 0 && (
+      {/* Show the multi-select toolbar when items are selected */}
+      {selectedTodos.length > 0 && (
+        <div className="flex items-center gap-3 bg-[#8B4513]/5 px-4 py-2.5 rounded-lg border border-[#8B4513]/10">
+          {/* Simplified count with clear button */}
           <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center h-6 w-6 rounded bg-[#8B4513] text-white font-medium text-sm">
+              {selectedTodos.length}
+            </div>
             <button
-              onClick={handleMassComplete}
-              disabled={isPending}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md 
-                       transition-colors disabled:opacity-50
-                       ${
-                         allSelectedCompleted
-                           ? "text-yellow-600 hover:bg-yellow-50"
-                           : "text-[#8B4513] hover:bg-[#8B4513]/10"
-                       }`}
+              onClick={() => setSelectedTodos([])}
+              className="text-[#8B4513]/60 hover:text-[#8B4513] transition-colors"
             >
-              <Check className="h-4 w-4" />
-              {allSelectedCompleted
-                ? `Uncomplete (${selectedItems.length})`
-                : `Complete (${
-                    hasUncompletedItems
-                      ? selectedItems.filter(
-                          (todo) => !completedTodos.has(todo.id)
-                        ).length
-                      : selectedItems.length
-                  })`}
-            </button>
-            <button
-              onClick={handleMassDelete}
-              disabled={isPending}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 
-                       hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
+              <X className="h-4 w-4" />
             </button>
           </div>
-        )}
-      </div>
 
-      {/* Selection bar */}
-      {selectedTodos.length > 0 && (
-        <div className="flex items-center gap-2 bg-[#8B4513]/5 px-4 py-2 rounded-lg">
-          <button
-            onClick={() =>
-              setSelectedTodos(
-                selectedTodos.length === todos.length
-                  ? []
-                  : todos.map((t) => t.id)
-              )
-            }
-            className="text-[#8B4513] hover:bg-[#8B4513]/10 p-1 rounded transition-colors"
+          {/* Priority dropdown with better contrast */}
+          <DropdownMenu.Root
+            open={bulkPriorityOpen}
+            onOpenChange={setBulkPriorityOpen}
           >
-            {selectedTodos.length === todos.length ? (
-              <CheckSquare className="h-5 w-5" />
-            ) : (
-              <Square className="h-5 w-5" />
-            )}
+            <DropdownMenu.Trigger asChild>
+              <button
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md 
+                         text-[#8B4513] bg-white/80 hover:bg-white transition-colors 
+                         focus:outline-none border border-[#8B4513]/20"
+              >
+                <span>Set Priority</span>
+              </button>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className="z-50 min-w-[8rem] overflow-hidden rounded-md border 
+                         border-[#8B4513]/10 bg-white p-1 shadow-md"
+                onMouseLeave={() => setBulkPriorityOpen(false)}
+                sideOffset={5}
+              >
+                {priorities.map(({ value, label, color, bgColor }) => (
+                  <DropdownMenu.Item
+                    key={value}
+                    onClick={() => handleBulkPriorityChange(value)}
+                    className={`px-2 py-1.5 text-sm outline-none cursor-pointer 
+                             ${color} hover:${bgColor} rounded-sm`}
+                  >
+                    {label}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+
+          {/* Complete button with matching style */}
+          <button
+            onClick={handleMassComplete}
+            disabled={isPending}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md 
+                     transition-colors disabled:opacity-50 border border-[#8B4513]/20
+                     text-[#8B4513] bg-white/80 hover:bg-white"
+          >
+            <Check className="h-4 w-4" />
+            {allSelectedCompleted
+              ? `Uncomplete (${selectedTodos.length})`
+              : `Complete (${selectedTodos.length})`}
           </button>
-          <span className="text-sm text-[#8B4513]">
-            {selectedTodos.length} selected
-          </span>
+
+          {/* Delete button with consistent styling */}
+          <button
+            onClick={handleMassDelete}
+            disabled={isPending}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md 
+                     transition-colors disabled:opacity-50 border border-red-200
+                     text-red-600 bg-white/80 hover:bg-white"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
         </div>
       )}
 

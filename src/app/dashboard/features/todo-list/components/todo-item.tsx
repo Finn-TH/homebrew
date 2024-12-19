@@ -1,15 +1,36 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Todo, Priority } from "../types";
-import { toggleTodo, deleteTodo } from "../actions";
+import { toggleTodo, deleteTodo, updatePriority } from "../actions";
 import { Trash2, Circle, CheckCircle, CheckCircle2 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
-const priorityColors: Record<Priority, string> = {
-  high: "bg-red-100 text-red-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  low: "bg-green-100 text-green-800",
-};
+const priorities: {
+  value: Priority;
+  label: string;
+  color: string;
+  bgColor: string;
+}[] = [
+  {
+    value: "low",
+    label: "Low",
+    color: "text-green-600",
+    bgColor: "bg-green-100",
+  },
+  {
+    value: "medium",
+    label: "Medium",
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-100",
+  },
+  {
+    value: "high",
+    label: "High",
+    color: "text-red-600",
+    bgColor: "bg-red-100",
+  },
+];
 
 interface TodoItemProps {
   todo: Todo;
@@ -17,6 +38,7 @@ interface TodoItemProps {
   isCompleted: boolean;
   onSelect: () => void;
   onToggleComplete: (completed: boolean) => void;
+  onPriorityChange?: (priority: Priority) => void;
 }
 
 export default function TodoItem({
@@ -25,8 +47,10 @@ export default function TodoItem({
   isCompleted,
   onSelect,
   onToggleComplete,
+  onPriorityChange,
 }: TodoItemProps) {
   const [isPending, startTransition] = useTransition();
+  const [priorityMenuOpen, setPriorityMenuOpen] = useState(false);
 
   const handleToggle = () => {
     startTransition(async () => {
@@ -38,6 +62,19 @@ export default function TodoItem({
       }
     });
   };
+
+  const handlePriorityChange = (newPriority: Priority) => {
+    startTransition(async () => {
+      try {
+        await updatePriority(todo.id, newPriority);
+        onPriorityChange?.(newPriority);
+      } catch (error) {
+        console.error("Failed to update priority:", error);
+      }
+    });
+  };
+
+  const currentPriority = priorities.find((p) => p.value === todo.priority);
 
   return (
     <li
@@ -76,13 +113,44 @@ export default function TodoItem({
           {todo.title}
         </span>
 
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            priorityColors[todo.priority]
-          }`}
+        <DropdownMenu.Root
+          open={priorityMenuOpen}
+          onOpenChange={setPriorityMenuOpen}
         >
-          {todo.priority}
-        </span>
+          <DropdownMenu.Trigger asChild onClick={(e) => e.stopPropagation()}>
+            <button
+              className={`px-2 py-1 rounded-full text-xs transition-colors focus:outline-none
+                       ${currentPriority?.color} ${currentPriority?.bgColor}`}
+            >
+              {currentPriority?.label}
+            </button>
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              className="z-50 min-w-[8rem] overflow-hidden rounded-md border 
+                       border-[#8B4513]/10 bg-white p-1 shadow-md"
+              onClick={(e) => e.stopPropagation()}
+              onMouseLeave={() => setPriorityMenuOpen(false)}
+              sideOffset={5}
+            >
+              {priorities.map(({ value, label, color, bgColor }) => (
+                <DropdownMenu.Item
+                  key={value}
+                  onClick={() => {
+                    handlePriorityChange(value);
+                    setPriorityMenuOpen(false);
+                  }}
+                  className={`px-2 py-1.5 text-sm outline-none cursor-pointer 
+                           ${color} hover:${bgColor} rounded-sm
+                           ${todo.priority === value ? bgColor : ""}`}
+                >
+                  {label}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
 
       <button
