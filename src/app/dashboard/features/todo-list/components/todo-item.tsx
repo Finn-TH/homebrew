@@ -57,6 +57,7 @@ export default function TodoItem({
 }: TodoItemProps) {
   const [isPending, startTransition] = useTransition();
   const [priorityMenuOpen, setPriorityMenuOpen] = useState(false);
+  const [dueDateStyle, setDueDateStyle] = useState("text-[#8B4513]/60");
 
   const handleToggle = () => {
     startTransition(async () => {
@@ -82,21 +83,23 @@ export default function TodoItem({
 
   const currentPriority = priorities.find((p) => p.value === todo.priority);
 
-  const getDueDateStyle = (dueDate: string) => {
-    const today = new Date();
-    const due = new Date(dueDate);
-    const diffDays = Math.ceil(
-      (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    );
+  useEffect(() => {
+    if (todo.due_date) {
+      const today = new Date();
+      const due = new Date(todo.due_date);
+      const diffDays = Math.ceil(
+        (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-    if (diffDays < 0) return "text-red-500"; // overdue
-    if (diffDays <= 2) return "text-orange-500"; // due soon
-    return "text-[#8B4513]/60"; // upcoming
-  };
+      if (diffDays < 0) setDueDateStyle("text-red-500");
+      else if (diffDays <= 2) setDueDateStyle("text-orange-500");
+      else setDueDateStyle("text-[#8B4513]/60");
+    }
+  }, [todo.due_date]);
 
   return (
     <li
-      className={`group flex items-center justify-between rounded-lg border p-4 
+      className={`grid grid-cols-[auto_1fr_150px_100px] items-center gap-4 rounded-lg border p-4 
                  transition-colors duration-200 cursor-pointer
                  ${
                    isSelected
@@ -106,36 +109,34 @@ export default function TodoItem({
                  hover:bg-[#8B4513]/5`}
       onClick={onSelect}
     >
-      <div className="flex items-center gap-4 flex-1">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggle();
-          }}
-          className="text-[#8B4513] hover:bg-[#8B4513]/10 rounded-full transition-colors p-1"
-        >
-          {isCompleted ? (
-            <CheckCircle2 className="h-5 w-5 text-[#8B4513]" />
-          ) : isSelected ? (
-            <CheckCircle className="h-5 w-5 text-[#8B4513]/70" />
-          ) : (
-            <Circle className="h-5 w-5 text-[#8B4513]/40" />
-          )}
-        </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleToggle();
+        }}
+        className="w-8 text-[#8B4513] hover:bg-[#8B4513]/10 rounded-full transition-colors p-1"
+      >
+        {isCompleted ? (
+          <CheckCircle2 className="h-5 w-5 text-[#8B4513]" />
+        ) : isSelected ? (
+          <CheckCircle className="h-5 w-5 text-[#8B4513]/70" />
+        ) : (
+          <Circle className="h-5 w-5 text-[#8B4513]/40" />
+        )}
+      </button>
 
-        <span
-          className={`transition-all duration-200 flex-1 ${
-            isCompleted ? "line-through text-[#8B4513]/40" : "text-[#8B4513]"
-          }`}
-        >
-          {todo.title}
-        </span>
+      <span
+        className={`transition-all duration-200 ${
+          isCompleted ? "line-through text-[#8B4513]/40" : "text-[#8B4513]"
+        }`}
+      >
+        {todo.title}
+      </span>
 
+      <span className="text-right">
         {todo.due_date && (
           <span
-            className={`flex items-center gap-1.5 text-sm ${getDueDateStyle(
-              todo.due_date
-            )}`}
+            className={`flex items-center justify-end gap-1.5 text-sm ${dueDateStyle}`}
           >
             <Calendar className="h-3.5 w-3.5" />
             {new Date(todo.due_date).toLocaleDateString("en-US", {
@@ -144,38 +145,49 @@ export default function TodoItem({
             })}
           </span>
         )}
+      </span>
 
+      <span className="text-center">
         <DropdownMenu.Root
           open={priorityMenuOpen}
           onOpenChange={setPriorityMenuOpen}
         >
-          <DropdownMenu.Trigger asChild onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu.Trigger asChild>
             <button
-              className={`px-2 py-1 rounded-full text-xs transition-colors focus:outline-none
-                       ${currentPriority?.color} ${currentPriority?.bgColor}`}
+              onClick={(e) => e.stopPropagation()}
+              className={`rounded-full px-3 py-0.5 text-sm
+                ${
+                  todo.priority === "low"
+                    ? "bg-green-100 text-green-600"
+                    : todo.priority === "medium"
+                    ? "bg-yellow-100 text-yellow-600"
+                    : "bg-red-100 text-red-600"
+                }
+              `}
             >
-              {currentPriority?.label}
+              {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
             </button>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Portal>
             <DropdownMenu.Content
-              className="z-50 min-w-[8rem] overflow-hidden rounded-md border 
-                       border-[#8B4513]/10 bg-white p-1 shadow-md"
-              onClick={(e) => e.stopPropagation()}
-              onMouseLeave={() => setPriorityMenuOpen(false)}
+              className="min-w-[8rem] overflow-hidden rounded-md border border-[#8B4513]/10 bg-white p-1 shadow-md"
               sideOffset={5}
             >
-              {priorities.map(({ value, label, color, bgColor }) => (
+              {priorities.map(({ value, label, color }) => (
                 <DropdownMenu.Item
                   key={value}
-                  onClick={() => {
-                    handlePriorityChange(value);
-                    setPriorityMenuOpen(false);
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startTransition(async () => {
+                      try {
+                        await updatePriority(todo.id, value);
+                      } catch (error) {
+                        console.error("Failed to update priority:", error);
+                      }
+                    });
                   }}
-                  className={`px-2 py-1.5 text-sm outline-none cursor-pointer 
-                           ${color} hover:${bgColor} rounded-sm
-                           ${todo.priority === value ? bgColor : ""}`}
+                  className={`px-2 py-1.5 text-sm outline-none cursor-pointer ${color} rounded-sm hover:bg-[#8B4513]/5`}
                 >
                   {label}
                 </DropdownMenu.Item>
@@ -183,20 +195,7 @@ export default function TodoItem({
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
-      </div>
-
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          deleteTodo(todo.id);
-        }}
-        disabled={isPending}
-        className="text-[#8B4513]/40 hover:text-[#8B4513] disabled:opacity-50 
-                 transition-colors duration-200 p-1 rounded opacity-0 
-                 group-hover:opacity-100 focus:opacity-100"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      </span>
     </li>
   );
 }

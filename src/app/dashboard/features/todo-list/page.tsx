@@ -1,8 +1,13 @@
-import { createClient } from "@/utils/supabase/server";
-import TodoList from "./components/todo-list";
+import TodoListServer from "./server/todo-list-server";
 import AddTodoButton from "./components/add-todo/add-todo-button";
 import FeatureLayout from "../../components/layout/feature-layout";
-import { Todo } from "./types";
+import { createClient } from "@/utils/supabase/server";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Todo List | Homebrew",
+  description: "Manage your tasks efficiently with Homebrew Todo List",
+};
 
 export default async function TodoPage() {
   const supabase = await createClient();
@@ -10,17 +15,15 @@ export default async function TodoPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: todos } = (await supabase
-    .from("todos")
-    .select("*")
-    .eq("user_id", user?.id)
-    .order("created_at", { ascending: false })) as { data: Todo[] };
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   return (
     <FeatureLayout user={user} title="Todo List">
       <div className="space-y-6">
         <AddTodoButton />
-        <TodoList todos={todos || []} />
+        <TodoListServer />
       </div>
     </FeatureLayout>
   );
