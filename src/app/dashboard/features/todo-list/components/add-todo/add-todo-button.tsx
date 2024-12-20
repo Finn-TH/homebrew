@@ -7,12 +7,6 @@ import AddTodoModal from "./add-todo-modal";
 export default function AddTodoButton() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Detect OS for showing the correct key combination
-  const isMac =
-    typeof window !== "undefined" &&
-    navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-  const modifierKey = isMac ? "⌘" : "Ctrl";
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -40,7 +34,7 @@ export default function AddTodoButton() {
           className="hidden group-hover:inline-flex items-center gap-1 px-2 py-0.5 
                      text-xs text-[#8B4513] bg-white/90 rounded-md ml-2"
         >
-          {modifierKey}K
+          Ctrl/⌘ K
         </kbd>
       </button>
 
