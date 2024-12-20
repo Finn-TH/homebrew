@@ -170,3 +170,31 @@ Follow these rules when you write code:
 - Provide meaningful error messages
 - Consider fallback UI states
 - Log errors appropriately
+
+### File Naming Conventions
+
+- Use kebab-case for all file names
+- Suffix client components with '-client'
+- Suffix server components with '-server'
+- Group related components in feature folders
+
+### Package Management Preferences
+
+- Use pnpm as the default package manager
+- Include pnpm-lock.yaml in version control
+- Use `pnpm add` for adding dependencies
+- Use `pnpm add -D` for dev dependencies
+
+### State Management
+
+- Use server actions for data mutations
+- Implement optimistic updates where appropriate
+- Keep selection state close to components
+- Use Set for efficient unique collections
+
+### Layout Preferences
+
+- Prefer CSS Grid for complex alignments
+- Use fixed column sizes for consistent layouts
+- Implement responsive grid patterns
+- Maintain alignment between headers and content
