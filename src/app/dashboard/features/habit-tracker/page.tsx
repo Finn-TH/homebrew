@@ -1,21 +1,30 @@
 import { createClient } from "@/utils/supabase/server";
+import FeatureLayout from "../../components/layout/feature-layout";
+import HabitTrackerServer from "./server/habit-tracker-server";
+import AddHabitButton from "./components/add-habit/add-habit-button";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Habit Tracker | Homebrew",
+  description: "Track and build better habits with Homebrew",
+};
 
 export default async function HabitTrackerPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: habits } = await supabase
-    .from("habits")
-    .select("*")
-    .eq("user_id", user?.id);
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   return (
-    <div className="relative mx-auto max-w-7xl p-8">
-      <h1 className="text-3xl font-bold text-[#8B4513] mb-6">Habit Tracker</h1>
-      <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-        <p className="text-[#A0522D]">Track your daily habits here...</p>
+    <FeatureLayout user={user} title="Habit Tracker">
+      <div className="space-y-6">
+        <AddHabitButton />
+        <HabitTrackerServer />
       </div>
-    </div>
+    </FeatureLayout>
   );
 }
