@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { addHabit } from "../../actions";
+import { addHabit } from "../actions";
 
 interface HabitFormProps {
   onComplete: () => void;

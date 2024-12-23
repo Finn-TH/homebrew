@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import FeatureLayout from "../../components/layout/feature-layout";
 import HabitTrackerServer from "./server/habit-tracker-server";
-import AddHabitButton from "./components/add-habit/add-habit-button";
+import AddHabitButton from "./add-habit/add-habit-button";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

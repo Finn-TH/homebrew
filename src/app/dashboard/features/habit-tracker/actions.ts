@@ -91,3 +91,43 @@ export async function updateHabitStatus(
 
   revalidatePath("/dashboard/features/habit-tracker");
 }
+
+export async function updateHabit(
+  habitId: string,
+  updates: {
+    title?: string;
+    category?: string;
+  }
+): Promise<void> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("habits")
+    .update(updates)
+    .eq("id", habitId);
+
+  if (error) throw error;
+  revalidatePath("/dashboard/features/habit-tracker");
+}
+
+export async function deleteHabit(habitId: string): Promise<void> {
+  const supabase = await createClient();
+
+  // Delete habit records first
+  const { error: recordsError } = await supabase
+    .from("habit_records")
+    .delete()
+    .eq("habit_id", habitId);
+
+  if (recordsError) throw recordsError;
+
+  // Then delete the habit
+  const { error: habitError } = await supabase
+    .from("habits")
+    .delete()
+    .eq("id", habitId);
+
+  if (habitError) throw habitError;
+
+  revalidatePath("/dashboard/features/habit-tracker");
+}
