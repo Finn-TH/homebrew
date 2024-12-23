@@ -1,40 +1,59 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { motion } from "framer-motion";
-import HabitForm from "./habit-form";
+import AddHabitForm from "../add-habit/habit-form";
 
 export default function AddHabitButton() {
+  const [open, setOpen] = useState(false);
+  const isMac =
+    typeof window !== "undefined" &&
+    navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+        event.preventDefault();
+        setOpen(true);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <button className="inline-flex items-center gap-2 rounded-lg bg-[#8B4513] px-4 py-2 text-sm font-medium text-white hover:bg-[#8B4513]/90 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20">
-          <Plus className="h-4 w-4" />
-          Add Habit
+        <button
+          className="group flex items-center gap-2 px-4 py-2.5 rounded-lg 
+                   bg-[#8B4513] text-white hover:bg-[#8B4513]/90 
+                   transition-colors shadow-sm"
+          aria-label="Add new habit"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="font-medium">Add Habit</span>
+          <kbd
+            className="hidden group-hover:inline-flex items-center gap-1 px-2 py-0.5 
+                       text-xs text-[#8B4513] bg-white/90 rounded-md ml-2"
+          >
+            Ctrl/⌘ K
+          </kbd>
         </button>
       </Dialog.Trigger>
-
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-xl">
-          <div className="flex items-center justify-between">
-            <Dialog.Title className="text-lg font-medium text-[#8B4513]">
+        <Dialog.Overlay className="fixed inset-0 bg-black/40" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog.Title className="text-lg font-semibold text-[#8B4513]">
               Add New Habit
             </Dialog.Title>
-            <Dialog.Close className="rounded-lg p-1.5 text-[#8B4513]/60 hover:bg-[#8B4513]/10 hover:text-[#8B4513]">
-              <X className="h-4 w-4" />
+            <Dialog.Close className="text-[#8B4513]/60 hover:text-[#8B4513]">
+              <Plus className="h-5 w-5 rotate-45" />
             </Dialog.Close>
           </div>
-
-          <HabitForm
-            onComplete={() =>
-              document
-                .querySelector<HTMLButtonElement>("[data-radix-focus-guard]")
-                ?.click()
-            }
-          />
+          <AddHabitForm onComplete={() => setOpen(false)} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
