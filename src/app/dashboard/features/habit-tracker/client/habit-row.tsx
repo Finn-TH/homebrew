@@ -1,33 +1,53 @@
 "use client";
 
 import { useState } from "react";
-import { Circle, Flame, X, Cog } from "lucide-react";
-import { Habit } from "../types";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { motion } from "framer-motion";
+import { Cog, Flame, X, Circle } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Habit, HabitRecord, HabitStatus } from "../types";
+import { updateHabitStatus } from "../actions";
 
 interface HabitRowProps {
   habit: Habit;
+  weekStart: Date;
+  records: HabitRecord[];
 }
 
-export default function HabitRow({ habit }: HabitRowProps) {
-  const [completedDays, setCompletedDays] = useState<Set<number>>(new Set());
+export default function HabitRow({ habit, weekStart, records }: HabitRowProps) {
+  const [isPending, setIsPending] = useState(false);
 
-  const isDatePast = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-    return date < today;
+  const getDayDate = (index: number) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + index);
+    return date;
   };
 
-  const getDayStatus = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
+  const formatDateKey = (date: Date) => {
+    return date.toISOString().split("T")[0];
+  };
 
-    if (date > today) return "future";
-    if (date.getTime() === today.getTime()) return "today";
-    return "past";
+  const getStatusForDate = (date: Date): HabitStatus => {
+    const dateKey = formatDateKey(date);
+    const record = records.find((r) => r.date === dateKey);
+    return record?.status || "pending";
+  };
+
+  const handleToggle = async (date: Date) => {
+    if (isPending) return;
+
+    const dateKey = formatDateKey(date);
+    const currentStatus = getStatusForDate(date);
+    const newStatus: HabitStatus =
+      currentStatus === "completed" ? "missed" : "completed";
+
+    setIsPending(true);
+    try {
+      await updateHabitStatus(habit.id, dateKey, newStatus);
+    } catch (error) {
+      console.error("Failed to update habit status:", error);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -49,9 +69,6 @@ export default function HabitRow({ habit }: HabitRowProps) {
               className="min-w-[180px] rounded-lg bg-white p-1 shadow-xl"
               sideOffset={5}
             >
-              <DropdownMenu.Item className="text-sm text-[#8B4513] hover:bg-[#8B4513]/5 rounded-md px-2 py-1.5 cursor-pointer">
-                Edit Habit
-              </DropdownMenu.Item>
               <DropdownMenu.Item className="text-sm text-red-600 hover:bg-red-50 rounded-md px-2 py-1.5 cursor-pointer">
                 Delete Habit
               </DropdownMenu.Item>
@@ -60,64 +77,39 @@ export default function HabitRow({ habit }: HabitRowProps) {
         </DropdownMenu.Root>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-[#8B4513]">
-          {habit.title}
-        </span>
-        {habit.streak > 0 && (
-          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-600 flex items-center gap-1">
-            <Flame className="h-3 w-3" fill="#f97316" />
-            {habit.streak}d
-          </span>
-        )}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-[#8B4513]">{habit.title}</span>
       </div>
 
       {[...Array(7)].map((_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        const status = getDayStatus(date);
-        const isCompleted = completedDays.has(i);
-        const isPast = isDatePast(new Date(date));
+        const date = getDayDate(i);
+        const status = getStatusForDate(date);
+        const isToday = formatDateKey(new Date()) === formatDateKey(date);
+        const isPast = date < new Date();
 
         return (
           <button
             key={i}
             className="group/check flex items-center justify-center"
-            onClick={() => {
-              if (status === "today") {
-                setCompletedDays((prev) => {
-                  const next = new Set(prev);
-                  if (next.has(i)) {
-                    next.delete(i);
-                  } else {
-                    next.add(i);
-                  }
-                  return next;
-                });
-              }
-            }}
+            onClick={() => isToday && handleToggle(date)}
+            disabled={!isToday || isPending}
           >
             <motion.div
-              whileTap={status === "today" ? { scale: 0.9 } : {}}
+              whileTap={isToday ? { scale: 0.9 } : {}}
               className={`rounded-full p-1.5 transition-colors ${
-                completedDays.has(i)
+                status === "completed"
                   ? "bg-orange-100 ring-1 ring-orange-500/20"
-                  : status === "today"
+                  : isToday
                   ? "group-hover/check:bg-[#8B4513]/5"
                   : ""
               }`}
             >
-              {isCompleted ? (
-                <Flame
-                  className="h-4 w-4 text-orange-500 animate-in fade-in"
-                  fill="#f97316"
-                />
-              ) : isPast ? (
+              {status === "completed" ? (
+                <Flame className="h-4 w-4 text-orange-500" fill="#f97316" />
+              ) : status === "missed" || (isPast && status === "pending") ? (
                 <X className="h-4 w-4 text-red-400" strokeWidth={2.5} />
-              ) : status === "future" ? (
-                <Circle className="h-4 w-4 text-[#8B4513]/10" />
               ) : (
-                <Circle className="h-4 w-4 text-[#8B4513]/40 transition-colors group-hover/check:text-[#8B4513]/60" />
+                <Circle className="h-4 w-4 text-[#8B4513]/40" />
               )}
             </motion.div>
           </button>

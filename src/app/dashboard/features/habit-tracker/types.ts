@@ -1,22 +1,17 @@
-export type Frequency = "daily" | "weekly" | "monthly";
+export type HabitStatus = "completed" | "missed" | "pending";
 
 export interface Habit {
   id: string;
   user_id: string;
   title: string;
-  frequency: Frequency;
-  target: number;
-  current: number;
-  streak: number;
-  category?: string;
-  color?: string;
-  start_date: string;
+  category: string;
   created_at: string;
 }
 
-export interface HabitCompletion {
+export interface HabitRecord {
   id: string;
   habit_id: string;
-  completed_at: string;
-  note?: string;
+  date: string;
+  status: HabitStatus;
+  created_at: string;
 }

@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import HabitGrid from "../client/habit-grid-client";
-import { Habit } from "../types";
+import { Habit, HabitRecord } from "../types";
 
 export default async function HabitTrackerServer() {
   const supabase = await createClient();
@@ -12,14 +12,15 @@ export default async function HabitTrackerServer() {
     throw new Error("User not authenticated");
   }
 
-  const { data: habits, error } = await supabase
+  // Get all habits
+  const { data: habits, error: habitsError } = await supabase
     .from("habits")
-    .select("*, habit_completions(*)")
+    .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching habits:", error.message);
+  if (habitsError) {
+    console.error("Error fetching habits:", habitsError.message);
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-600">
         <p>Failed to load habits. Please try again later.</p>
@@ -27,6 +28,31 @@ export default async function HabitTrackerServer() {
     );
   }
 
+  // Get current week's records for all habits
+  const monday = new Date();
+  while (monday.getDay() !== 1) {
+    monday.setDate(monday.getDate() - 1);
+  }
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const { data: records, error: recordsError } = await supabase
+    .from("habit_records")
+    .select("*")
+    .in("habit_id", habits?.map((h) => h.id) || [])
+    .gte("date", monday.toISOString().split("T")[0])
+    .lte("date", sunday.toISOString().split("T")[0]);
+
+  if (recordsError) {
+    console.error("Error fetching habit records:", recordsError.message);
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-600">
+        <p>Failed to load habit records. Please try again later.</p>
+      </div>
+    );
+  }
+
+  // Group habits by category
   const groupedHabits = (habits || []).reduce((acc, habit) => {
     const category = habit.category || "Uncategorized";
     if (!acc[category]) {
@@ -46,7 +72,7 @@ export default async function HabitTrackerServer() {
 
   return (
     <div className="space-y-6">
-      <HabitGrid initialHabits={groupedHabits} />
+      <HabitGrid initialHabits={groupedHabits} habitRecords={records || []} />
     </div>
   );
 }
