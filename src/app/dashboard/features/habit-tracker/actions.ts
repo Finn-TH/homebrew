@@ -43,7 +43,28 @@ export async function updateHabitStatus(
 ): Promise<void> {
   const supabase = await createClient();
 
-  const { error } = await supabase.from("habit_records").upsert(
+  // Start a transaction
+  const { data: habit } = await supabase
+    .from("habits")
+    .select("current_streak, longest_streak, total_completions")
+    .eq("id", habitId)
+    .single();
+
+  if (!habit) throw new Error("Habit not found");
+
+  let { current_streak, longest_streak, total_completions } = habit;
+
+  // Update streak based on new status
+  if (status === "completed") {
+    current_streak += 1;
+    longest_streak = Math.max(longest_streak, current_streak);
+    total_completions += 1;
+  } else {
+    current_streak = 0;
+  }
+
+  // Update habit record
+  const { error: recordError } = await supabase.from("habit_records").upsert(
     {
       habit_id: habitId,
       date: date,
@@ -54,6 +75,19 @@ export async function updateHabitStatus(
     }
   );
 
-  if (error) throw error;
+  if (recordError) throw recordError;
+
+  // Update habit streak data
+  const { error: habitError } = await supabase
+    .from("habits")
+    .update({
+      current_streak,
+      longest_streak,
+      total_completions,
+    })
+    .eq("id", habitId);
+
+  if (habitError) throw habitError;
+
   revalidatePath("/dashboard/features/habit-tracker");
 }

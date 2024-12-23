@@ -77,8 +77,16 @@ export default function HabitRow({ habit, weekStart, records }: HabitRowProps) {
         </DropdownMenu.Root>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         <span className="text-sm text-[#8B4513]">{habit.title}</span>
+        {habit.current_streak > 0 && (
+          <div className="flex items-center gap-1">
+            <Flame className="h-4 w-4 text-orange-500" fill="#f97316" />
+            <span className="text-sm font-medium text-orange-500">
+              {habit.current_streak}
+            </span>
+          </div>
+        )}
       </div>
 
       {[...Array(7)].map((_, i) => {

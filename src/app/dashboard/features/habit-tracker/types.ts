@@ -6,6 +6,9 @@ export interface Habit {
   title: string;
   category: string;
   created_at: string;
+  current_streak: number;
+  longest_streak: number;
+  total_completions: number;
 }
 
 export interface HabitRecord {
