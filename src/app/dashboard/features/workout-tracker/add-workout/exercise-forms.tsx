@@ -13,15 +13,15 @@ export function StrengthExerciseForm({
   const ex = exercise as StrengthExercise;
   return (
     <div className="relative space-y-2">
-      <div className="flex items-center gap-2 mb-3">
-        <Dumbbell className="h-4 w-4 text-[#8B4513]" />
-        <span className="text-sm font-medium text-[#8B4513]">
-          Strength Exercise
-        </span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Dumbbell className="h-4 w-4 text-[#8B4513]" />
+          <span className="text-sm font-medium text-[#8B4513]">{ex.name}</span>
+        </div>
         <button
           type="button"
           onClick={onRemove}
-          className="absolute right-0 top-0 text-[#8B4513]/40 hover:text-[#8B4513] transition-colors"
+          className="text-[#8B4513]/40 hover:text-[#8B4513] transition-colors"
         >
           <Trash2 className="h-4 w-4" />
         </button>

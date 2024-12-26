@@ -79,20 +79,3 @@ export async function deleteWorkout(workoutId: string): Promise<void> {
 
   revalidatePath("/dashboard/features/workout-tracker");
 }
-
-export async function getWorkoutTemplates() {
-  const supabase = await createClient();
-
-  const { data: templates, error } = await supabase
-    .from("workout_templates")
-    .select(
-      `
-      *,
-      workout_template_exercises (*)
-    `
-    )
-    .eq("is_public", true);
-
-  if (error) throw error;
-  return templates;
-}
