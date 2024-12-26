@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import { WorkoutLog, WorkoutLogExercise } from "../types";
 import { deleteWorkout } from "../actions";
+import { formatDateKey } from "../utils/date";
 
 interface WorkoutRowProps {
   workout: WorkoutLog;
@@ -55,10 +56,15 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex-1 flex items-center justify-between p-3 rounded-lg hover:bg-[#8B4513]/5 transition-colors"
         >
-          <span className="text-[#8B4513] font-medium">{workout.name}</span>
+          <div className="flex flex-col">
+            <span className="text-[#8B4513] font-medium">{workout.name}</span>
+            <span className="text-sm text-[#8B4513]/60">
+              {workout.workout_log_exercises.length} exercises
+            </span>
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#8B4513]/60">
-              {new Date(workout.date).toLocaleDateString()}
+              {formatDateKey(new Date(workout.date))}
             </span>
             {isExpanded ? (
               <ChevronUp className="h-4 w-4 text-[#8B4513]/60" />

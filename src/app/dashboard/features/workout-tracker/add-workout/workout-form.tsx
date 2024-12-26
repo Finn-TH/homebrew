@@ -53,6 +53,7 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
 
   const applyPreset = (preset: PresetWorkout) => {
     setSelectedPreset(preset.id);
+    setWorkoutName(preset.name);
     const presetExercises: Exercise[] = preset.exercises.map((ex) => ({
       name: ex.name,
       type: ex.type,
@@ -178,19 +179,13 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
                         isSelected ? "text-[#8B4513]" : "text-[#8B4513]/80"
                       }`}
                     />
-                    <div className="h-12 flex items-center">
-                      {" "}
-                      {/* Fixed height container for title */}
-                      <span
-                        className={`font-medium text-center whitespace-pre-line ${
-                          isSelected ? "text-[#8B4513]" : "text-[#8B4513]/80"
-                        }`}
-                      >
-                        {preset.name.includes(" ")
-                          ? preset.name.replace(" ", "\n") // Force two lines for names with spaces
-                          : preset.name}
-                      </span>
-                    </div>
+                    <span
+                      className={`font-medium text-center mb-1 ${
+                        isSelected ? "text-[#8B4513]" : "text-[#8B4513]/80"
+                      }`}
+                    >
+                      {preset.name}
+                    </span>
                     <span
                       className={`text-sm text-center ${
                         isSelected ? "text-[#8B4513]/80" : "text-[#8B4513]/60"

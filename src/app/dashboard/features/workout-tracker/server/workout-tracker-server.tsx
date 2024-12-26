@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { WorkoutLog, WorkoutLogExercise } from "../types";
+import { getUserLocalDate } from "../utils/date";
 
 export default async function WorkoutTrackerServer() {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export default async function WorkoutTrackerServer() {
   }
 
   // Get today's workouts with their exercises
-  const today = new Date().toISOString().split("T")[0];
+  const today = getUserLocalDate();
   const { data: workouts, error } = (await supabase
     .from("workout_logs")
     .select(

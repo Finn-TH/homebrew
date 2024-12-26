@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { Exercise } from "./types";
+import { getUserLocalDate } from "./utils/date";
 
 export async function addWorkout(
   name: string,
@@ -24,8 +25,8 @@ export async function addWorkout(
       .insert([
         {
           user_id: user.id,
-          name: name,
-          date: new Date().toISOString().split("T")[0],
+          name,
+          date: getUserLocalDate(),
         },
       ])
       .select()
