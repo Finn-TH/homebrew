@@ -4,16 +4,21 @@ import { useState, useEffect } from "react";
 import { Dumbbell, ChevronDown, ChevronUp } from "lucide-react";
 import { startOfWeek, addDays, format } from "date-fns";
 
+interface Exercise {
+  name: string;
+  sets: number;
+  reps: number;
+  weight?: number;
+  duration: number;
+  distance?: number;
+  type: string;
+}
+
 interface WeeklyWorkout {
   id: number;
   name: string;
   date: string;
-  exercises: {
-    name: string;
-    sets: number;
-    reps: number;
-    weight?: number;
-  }[];
+  exercises: Exercise[];
 }
 
 export default function WeeklyView() {
@@ -129,10 +134,17 @@ export default function WeeklyView() {
                     className="flex items-center justify-between bg-[#8B4513]/5 p-3 rounded-lg"
                   >
                     <span className="text-[#8B4513]">{exercise.name}</span>
-                    <span className="text-[#8B4513]/60">
-                      {exercise.sets} x {exercise.reps}
-                      {exercise.weight && ` @ ${exercise.weight}lbs`}
-                    </span>
+                    {exercise.type === "strength" ? (
+                      <span className="text-[#8B4513]/60">
+                        {exercise.sets} × {exercise.reps}
+                        {exercise.weight && ` @ ${exercise.weight}lbs`}
+                      </span>
+                    ) : (
+                      <span className="text-[#8B4513]/60">
+                        {exercise.duration}
+                        {exercise.distance && ` • ${exercise.distance}km`}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

@@ -2,20 +2,16 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
-import * as Dialog from "@radix-ui/react-dialog";
 import { useRouter } from "next/navigation";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Exercise } from "../types";
 
 interface WorkoutRowProps {
   workout: {
-    id: number;
+    id: string;
     name: string;
     date: string;
-    exercises: {
-      name: string;
-      sets: number;
-      reps: number;
-      weight?: number;
-    }[];
+    exercises: Exercise[];
   };
 }
 
@@ -35,8 +31,6 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
         (w: any) => w.id !== workout.id
       );
       localStorage.setItem("workouts", JSON.stringify(updatedWorkouts));
-
-      // Dispatch custom event for immediate update
       window.dispatchEvent(new Event("workoutAdded"));
       router.refresh();
     } catch (error) {
@@ -44,6 +38,24 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
     } finally {
       setIsDeleting(false);
       setDeleteOpen(false);
+    }
+  };
+
+  const renderExerciseDetails = (exercise: Exercise) => {
+    if (exercise.type === "strength") {
+      return (
+        <span className="text-[#8B4513]/60">
+          {exercise.sets} × {exercise.reps}
+          {exercise.weight && ` @ ${exercise.weight}lbs`}
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-[#8B4513]/60">
+          {exercise.duration} min
+          {exercise.distance && ` • ${exercise.distance}km`}
+        </span>
+      );
     }
   };
 
@@ -69,31 +81,31 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
 
         <Dialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
           <Dialog.Trigger asChild>
-            <button
-              className="ml-2 p-2 text-[#8B4513]/40 hover:text-[#8B4513] hover:bg-[#8B4513]/5 rounded-lg transition-colors"
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-4 w-4" />
+            <button className="p-2 hover:bg-[#8B4513]/5 rounded-lg transition-colors ml-2">
+              <Trash2 className="h-4 w-4 text-[#8B4513]/60" />
             </button>
           </Dialog.Trigger>
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-lg">
-              <Dialog.Title className="text-lg font-semibold text-[#8B4513] mb-2">
+            <Dialog.Overlay className="fixed inset-0 bg-black/20" />
+            <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg space-y-4">
+              <Dialog.Title className="text-lg font-medium text-[#8B4513]">
                 Delete Workout
               </Dialog.Title>
-              <Dialog.Description className="text-[#8B4513]/70 mb-6">
+              <Dialog.Description className="text-[#8B4513]/60">
                 Are you sure you want to delete this workout? This action cannot
                 be undone.
               </Dialog.Description>
-              <div className="flex gap-3 justify-end">
-                <Dialog.Close className="px-4 py-2 rounded-lg text-[#8B4513] hover:bg-[#8B4513]/5">
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setDeleteOpen(false)}
+                  className="px-4 py-2 text-sm text-[#8B4513]/60 hover:text-[#8B4513] transition-colors"
+                >
                   Cancel
-                </Dialog.Close>
+                </button>
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                  className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
@@ -111,10 +123,7 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
               className="flex items-center justify-between bg-[#8B4513]/5 p-3 rounded-lg"
             >
               <span className="text-[#8B4513]">{exercise.name}</span>
-              <span className="text-[#8B4513]/60">
-                {exercise.sets} x {exercise.reps}{" "}
-                {exercise.weight && `@ ${exercise.weight}lbs`}
-              </span>
+              {renderExerciseDetails(exercise)}
             </div>
           ))}
         </div>

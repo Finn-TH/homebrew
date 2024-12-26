@@ -13,18 +13,7 @@ export default function WorkoutContent() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div className="flex flex-wrap gap-3">
-          <AddWorkoutButton />
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#8B4513]/10 text-[#8B4513] hover:bg-[#8B4513]/20 transition-colors">
-            Full Body
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#8B4513]/10 text-[#8B4513] hover:bg-[#8B4513]/20 transition-colors">
-            Upper Body
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#8B4513]/10 text-[#8B4513] hover:bg-[#8B4513]/20 transition-colors">
-            Lower Body
-          </button>
-        </div>
+        <AddWorkoutButton />
 
         {/* View Toggle */}
         <div className="flex items-center gap-2 bg-[#8B4513]/5 rounded-lg p-1">
