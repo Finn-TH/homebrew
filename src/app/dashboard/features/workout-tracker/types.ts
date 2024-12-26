@@ -17,8 +17,6 @@ export interface CardioExercise extends BaseExercise {
   distance?: number;
 }
 
-export type Exercise = StrengthExercise | CardioExercise;
-
 // Database types (from Supabase)
 export interface WorkoutLog {
   id: string;
@@ -62,4 +60,15 @@ export interface WorkoutTemplateExercise {
   default_reps: number | null;
   default_duration: number | null;
   created_at: string;
+}
+
+export interface Exercise {
+  name: string;
+  type: "strength" | "cardio";
+  // Make sure these match your database columns exactly
+  sets?: number;
+  reps?: number;
+  weight?: number;
+  duration?: number;
+  distance?: number;
 }

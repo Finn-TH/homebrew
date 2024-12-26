@@ -22,11 +22,11 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
     try {
       await deleteWorkout(workout.id);
       router.refresh();
+      setDeleteOpen(false);
     } catch (error) {
       console.error("Failed to delete workout:", error);
     } finally {
       setIsDeleting(false);
-      setDeleteOpen(false);
     }
   };
 

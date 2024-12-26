@@ -96,7 +96,7 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
       onComplete();
     } catch (error) {
       console.error("Failed to add workout:", error);
-      // You might want to show an error toast here
+      alert("Failed to add workout. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

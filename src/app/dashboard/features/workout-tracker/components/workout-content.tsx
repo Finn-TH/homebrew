@@ -6,8 +6,15 @@ import { CalendarDays, ListTodo } from "lucide-react";
 import WorkoutsDisplay from "./workouts-display";
 import WeeklyView from "./weekly-view";
 import AddWorkoutButton from "../add-workout/add-workout-button";
+import { WorkoutLog } from "../types";
 
-export default function WorkoutContent() {
+interface WorkoutContentProps {
+  initialWorkouts: WorkoutLog[];
+}
+
+export default function WorkoutContent({
+  initialWorkouts,
+}: WorkoutContentProps) {
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("daily");
 
   return (
@@ -54,7 +61,11 @@ export default function WorkoutContent() {
           <h2 className="text-lg font-semibold text-[#8B4513] mb-4">
             {viewMode === "daily" ? "Today's Workout" : "This Week"}
           </h2>
-          {viewMode === "daily" ? <WorkoutsDisplay /> : <WeeklyView />}
+          {viewMode === "daily" ? (
+            <WorkoutsDisplay initialWorkouts={initialWorkouts} />
+          ) : (
+            <WeeklyView />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

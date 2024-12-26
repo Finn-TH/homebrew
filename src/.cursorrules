@@ -198,3 +198,59 @@ Follow these rules when you write code:
 - Use fixed column sizes for consistent layouts
 - Implement responsive grid patterns
 - Maintain alignment between headers and content
+
+### Supabase Real-time Updates Best Practices
+
+#### Database Setup
+
+- Ensure proper RLS (Row Level Security) policies are in place:
+  ```sql
+  -- Example for a table 'items'
+  CREATE POLICY "Enable read access for users own items"
+  ON items FOR SELECT
+  USING (auth.uid() = user_id);
+  ```
+- RLS policies are required for real-time functionality
+- Match policy columns to your actual database schema
+
+#### Real-time Subscriptions
+
+- Implement in client components:
+
+  ```typescript
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("table-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "your_table",
+        },
+        () => {
+          router.refresh(); // Trigger server refresh
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router]);
+  ```
+
+#### Update Triggers
+
+- Use `router.refresh()` after mutations
+- Implement `revalidatePath()` in server actions
+- Consider subscribing to related tables if needed
+
+#### Checklist for Real-time Updates
+
+1. ✓ RLS policies match database schema
+2. ✓ Real-time subscriptions in client components
+3. ✓ Router refresh after mutations
+4. ✓ Proper cleanup in useEffect
+5. ✓ Error handling for failed subscriptions
