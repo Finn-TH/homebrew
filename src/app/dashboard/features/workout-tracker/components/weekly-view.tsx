@@ -3,155 +3,109 @@
 import { useState, useEffect } from "react";
 import { Dumbbell, ChevronDown, ChevronUp } from "lucide-react";
 import { startOfWeek, addDays, format } from "date-fns";
-
-interface Exercise {
-  name: string;
-  sets: number;
-  reps: number;
-  weight?: number;
-  duration: number;
-  distance?: number;
-  type: string;
-}
-
-interface WeeklyWorkout {
-  id: number;
-  name: string;
-  date: string;
-  exercises: Exercise[];
-}
+import { createClient } from "@/utils/supabase/client";
+import { WorkoutLog } from "../types";
 
 export default function WeeklyView() {
   const [weeklyWorkouts, setWeeklyWorkouts] = useState<
-    Record<string, WeeklyWorkout>
+    Record<string, WorkoutLog>
   >({});
-  const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const getWeekStart = () => {
-    const now = new Date();
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(now.setDate(diff));
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toISOString().split("T")[0];
-  };
+  // Get the dates for this week
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start from Monday
+  const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   useEffect(() => {
-    const savedWorkouts: WeeklyWorkout[] = JSON.parse(
-      localStorage.getItem("workouts") || "[]"
-    );
-    const workoutsByDay: Record<string, WeeklyWorkout> = {};
-    savedWorkouts.forEach((workout) => {
-      workoutsByDay[workout.date.split("T")[0]] = workout;
-    });
-    setWeeklyWorkouts(workoutsByDay);
-  }, []);
+    const fetchWeeklyWorkouts = async () => {
+      try {
+        setIsLoading(true);
+        const supabase = createClient();
 
-  const toggleExpand = (dateStr: string) => {
-    setExpandedWorkout(expandedWorkout === dateStr ? null : dateStr);
-  };
+        const startDate = format(weekStart, "yyyy-MM-dd");
+        const endDate = format(addDays(weekStart, 6), "yyyy-MM-dd");
 
-  const weekStart = getWeekStart();
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + i);
-    return {
-      date,
-      dateStr: formatDate(date),
-      workout: weeklyWorkouts[formatDate(date)],
-      isToday: formatDate(new Date()) === formatDate(date),
-      dayName: date.toLocaleDateString("en-US", { weekday: "short" }),
-      dayNumber: date.getDate(),
+        const { data, error } = await supabase
+          .from("workout_logs")
+          .select(
+            `
+            *,
+            workout_log_exercises (*)
+          `
+          )
+          .gte("date", startDate)
+          .lte("date", endDate);
+
+        if (error) throw error;
+
+        // Convert array to record keyed by date
+        const workoutsByDay: Record<string, WorkoutLog> = {};
+        data?.forEach((workout) => {
+          workoutsByDay[workout.date] = workout;
+        });
+
+        setWeeklyWorkouts(workoutsByDay);
+      } catch (err) {
+        console.error("Error fetching weekly workouts:", err);
+        setError("Failed to load weekly workouts");
+      } finally {
+        setIsLoading(false);
+      }
     };
-  });
+
+    fetchWeeklyWorkouts();
+  }, [weekStart]);
+
+  if (isLoading) {
+    return (
+      <div className="text-[#8B4513]/60 text-center py-8">
+        Loading weekly workouts...
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-600 text-center py-8">{error}</div>;
+  }
 
   return (
-    <div className="space-y-2">
-      {weekDays.map(
-        ({ date, dateStr, workout, isToday, dayName, dayNumber }) => (
-          <div key={dateStr} className="space-y-2">
-            <div
-              className={`
-              flex items-center gap-6 p-4 rounded-lg border
-              ${
-                workout
-                  ? "bg-[#8B4513]/5 border-[#8B4513]/20"
-                  : "border-[#8B4513]/10"
-              }
-              ${isToday ? "border-[#8B4513]" : ""}
-            `}
-            >
-              {/* Day Column */}
-              <div className="w-16 flex flex-col">
-                <span className="text-sm text-[#8B4513]/60">{dayName}</span>
-                <span
-                  className={`text-lg ${
-                    isToday ? "text-[#8B4513] font-medium" : "text-[#8B4513]/80"
-                  }`}
-                >
-                  {dayNumber}
-                </span>
-              </div>
+    <div className="grid grid-cols-7 gap-4">
+      {weekDates.map((date) => {
+        const dateStr = format(date, "yyyy-MM-dd");
+        const workout = weeklyWorkouts[dateStr];
+        const isToday = format(new Date(), "yyyy-MM-dd") === dateStr;
 
-              {/* Workout Info */}
-              {workout ? (
-                <button
-                  onClick={() => toggleExpand(dateStr)}
-                  className="flex-1 flex items-center justify-between"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Dumbbell className="h-4 w-4 text-[#8B4513]" />
-                      <span className="font-medium text-[#8B4513]">
-                        {workout.name}
-                      </span>
-                    </div>
-                    <span className="text-sm text-[#8B4513]/60">
-                      {workout.exercises.length} exercises
-                    </span>
-                  </div>
-                  {expandedWorkout === dateStr ? (
-                    <ChevronUp className="h-4 w-4 text-[#8B4513]/60" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-[#8B4513]/60" />
-                  )}
-                </button>
-              ) : (
-                <span className="flex-1 text-[#8B4513]/40 italic">
-                  Rest Day
-                </span>
-              )}
+        return (
+          <div
+            key={dateStr}
+            className={`p-4 rounded-xl ${
+              isToday
+                ? "bg-[#8B4513]/10 border-2 border-[#8B4513]"
+                : "bg-white/80"
+            }`}
+          >
+            <div className="text-sm font-medium text-[#8B4513]">
+              {format(date, "EEE")}
             </div>
-
-            {/* Expanded Exercises */}
-            {expandedWorkout === dateStr && workout && (
-              <div className="space-y-2 pl-20">
-                {workout.exercises.map((exercise, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-[#8B4513]/5 p-3 rounded-lg"
-                  >
-                    <span className="text-[#8B4513]">{exercise.name}</span>
-                    {exercise.type === "strength" ? (
-                      <span className="text-[#8B4513]/60">
-                        {exercise.sets} × {exercise.reps}
-                        {exercise.weight && ` @ ${exercise.weight}lbs`}
-                      </span>
-                    ) : (
-                      <span className="text-[#8B4513]/60">
-                        {exercise.duration}
-                        {exercise.distance && ` • ${exercise.distance}km`}
-                      </span>
-                    )}
-                  </div>
-                ))}
+            <div className="text-lg font-bold text-[#8B4513]">
+              {format(date, "d")}
+            </div>
+            {workout ? (
+              <div className="mt-2">
+                <div className="text-sm font-medium text-[#8B4513]">
+                  {workout.name}
+                </div>
+                <div className="text-xs text-[#8B4513]/60">
+                  {workout.workout_log_exercises.length} exercises
+                </div>
               </div>
+            ) : (
+              <div className="mt-2 text-xs text-[#8B4513]/40">No workout</div>
             )}
           </div>
-        )
-      )}
+        );
+      })}
     </div>
   );
 }

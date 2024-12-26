@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Dumbbell, Timer } from "lucide-react";
-import { CardioExercise, Exercise, StrengthExercise } from "../types";
+import { useState, useEffect } from "react";
+import { Plus, Dumbbell, Timer, Copy } from "lucide-react";
+import {
+  CardioExercise,
+  Exercise,
+  StrengthExercise,
+  WorkoutTemplate,
+} from "../types";
 import { StrengthExerciseForm, CardioExerciseForm } from "./exercise-forms";
+import { useRouter } from "next/navigation";
+import { addWorkout, getWorkoutTemplates } from "../actions";
 
 interface WorkoutFormProps {
   onComplete: () => void;
@@ -12,7 +19,47 @@ interface WorkoutFormProps {
 export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
   const [workoutName, setWorkoutName] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const data = await getWorkoutTemplates();
+        setTemplates(data);
+      } catch (error) {
+        console.error("Failed to load templates:", error);
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    };
+    loadTemplates();
+  }, []);
+
+  const applyTemplate = (template: WorkoutTemplate) => {
+    setWorkoutName(template.name);
+    const templateExercises: Exercise[] =
+      template.workout_template_exercises.map((ex) => {
+        if (ex.type === "strength") {
+          return {
+            name: ex.name,
+            type: "strength",
+            sets: ex.default_sets || 3,
+            reps: ex.default_reps || 10,
+          } as StrengthExercise;
+        } else {
+          return {
+            name: ex.name,
+            type: "cardio",
+            duration: ex.default_duration || 30,
+          } as CardioExercise;
+        }
+      });
+    setExercises(templateExercises);
+  };
 
   const addStrengthExercise = () => {
     const newExercise: StrengthExercise = {
@@ -39,25 +86,20 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
     setExercises(exercises.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const workout = {
-      id: Date.now().toString(),
-      name: workoutName,
-      exercises,
-      date: new Date().toISOString(),
-    };
+    setIsSubmitting(true);
 
-    const existingWorkouts = JSON.parse(
-      localStorage.getItem("workouts") || "[]"
-    );
-    localStorage.setItem(
-      "workouts",
-      JSON.stringify([workout, ...existingWorkouts])
-    );
-
-    window.dispatchEvent(new Event("workoutAdded"));
-    onComplete();
+    try {
+      await addWorkout(workoutName, exercises);
+      router.refresh();
+      onComplete();
+    } catch (error) {
+      console.error("Failed to add workout:", error);
+      // You might want to show an error toast here
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -78,6 +120,25 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
           placeholder="Enter workout name..."
           required
         />
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-[#8B4513]">
+          Templates
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {templates.map((template) => (
+            <button
+              key={template.id}
+              type="button"
+              onClick={() => applyTemplate(template)}
+              className="flex items-center gap-2 p-3 rounded-lg border border-[#8B4513]/10 hover:bg-[#8B4513]/5 transition-colors"
+            >
+              <Copy className="h-4 w-4 text-[#8B4513]/60" />
+              <span className="text-sm text-[#8B4513]">{template.name}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -139,9 +200,10 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
 
       <button
         type="submit"
-        className="w-full rounded-lg bg-[#8B4513] px-4 py-2.5 text-white font-medium hover:bg-[#8B4513]/90 transition-colors"
+        disabled={isSubmitting || !workoutName || exercises.length === 0}
+        className="w-full rounded-lg bg-[#8B4513] px-4 py-2.5 text-white font-medium hover:bg-[#8B4513]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Add Workout
+        {isSubmitting ? "Saving..." : "Add Workout"}
       </button>
     </form>
   );

@@ -4,15 +4,11 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Exercise } from "../types";
+import { WorkoutLog, WorkoutLogExercise } from "../types";
+import { deleteWorkout } from "../actions";
 
 interface WorkoutRowProps {
-  workout: {
-    id: string;
-    name: string;
-    date: string;
-    exercises: Exercise[];
-  };
+  workout: WorkoutLog;
 }
 
 export default function WorkoutRow({ workout }: WorkoutRowProps) {
@@ -21,17 +17,10 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const router = useRouter();
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const existingWorkouts = JSON.parse(
-        localStorage.getItem("workouts") || "[]"
-      );
-      const updatedWorkouts = existingWorkouts.filter(
-        (w: any) => w.id !== workout.id
-      );
-      localStorage.setItem("workouts", JSON.stringify(updatedWorkouts));
-      window.dispatchEvent(new Event("workoutAdded"));
+      await deleteWorkout(workout.id);
       router.refresh();
     } catch (error) {
       console.error("Failed to delete workout:", error);
@@ -41,7 +30,7 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
     }
   };
 
-  const renderExerciseDetails = (exercise: Exercise) => {
+  const renderExerciseDetails = (exercise: WorkoutLogExercise) => {
     if (exercise.type === "strength") {
       return (
         <span className="text-[#8B4513]/60">
@@ -117,9 +106,9 @@ export default function WorkoutRow({ workout }: WorkoutRowProps) {
 
       {isExpanded && (
         <div className="space-y-2 pl-4">
-          {workout.exercises.map((exercise, index) => (
+          {workout.workout_log_exercises.map((exercise) => (
             <div
-              key={index}
+              key={exercise.id}
               className="flex items-center justify-between bg-[#8B4513]/5 p-3 rounded-lg"
             >
               <span className="text-[#8B4513]">{exercise.name}</span>
