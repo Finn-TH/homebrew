@@ -1,25 +1,40 @@
 import { createClient } from "@/utils/supabase/server";
+import FeatureLayout from "../../components/layout/feature-layout";
+import NutritionContent from "./components/nutrition-content";
+import { getWeekDates } from "./utils/date";
 
-export default async function NutritionPage() {
+export default async function NutritionLoggerPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: meals } = await supabase
-    .from("meals")
-    .select("*")
-    .eq("user_id", user?.id);
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { start: startDate, end: endDate } = getWeekDates();
+
+  const { data: nutritionMeals, error } = await supabase
+    .from("nutrition_meals")
+    .select(
+      `
+      *,
+      nutrition_food_items (*)
+    `
+    )
+    .eq("user_id", user.id)
+    .gte("date", startDate)
+    .lte("date", endDate)
+    .order("date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching nutrition meals:", error);
+  }
 
   return (
-    <div className="relative mx-auto max-w-7xl p-8">
-      <h1 className="text-3xl font-bold text-[#8B4513] mb-6">
-        Nutrition Logger
-      </h1>
-      <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-        <p className="text-[#A0522D]">
-          Record your meals and nutrition here...
-        </p>
-      </div>
-    </div>
+    <FeatureLayout user={user} title="Nutrition Logger">
+      <NutritionContent initialMeals={nutritionMeals || []} />
+    </FeatureLayout>
   );
 }
