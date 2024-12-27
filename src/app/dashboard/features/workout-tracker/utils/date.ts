@@ -1,23 +1,23 @@
 // Create a new shared date utility file
-export function getUserLocalDate() {
-  return new Date().toLocaleDateString("en-CA"); // Returns YYYY-MM-DD in local timezone
-}
+export const getUserLocalDate = () => {
+  return new Date().toLocaleDateString("en-CA");
+};
 
-export function getWeekDates() {
-  const now = new Date();
-  const monday = new Date(now);
-  while (monday.getDay() !== 1) {
-    monday.setDate(monday.getDate() - 1);
-  }
+export const getWeekDates = (date: Date = new Date()) => {
+  const curr = new Date(date);
+  const first = curr.getDate() - curr.getDay();
 
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
+  const firstDay = new Date(curr);
+  firstDay.setDate(first);
+
+  const lastDay = new Date(curr);
+  lastDay.setDate(first + 6);
 
   return {
-    start: monday.toLocaleDateString("en-CA"),
-    end: sunday.toLocaleDateString("en-CA"),
+    start: firstDay.toLocaleDateString("en-CA"),
+    end: lastDay.toLocaleDateString("en-CA"),
   };
-}
+};
 
 export function formatDateKey(date: Date) {
   return date.toLocaleDateString("en-CA");

@@ -80,3 +80,19 @@ export async function deleteWorkout(workoutId: string): Promise<void> {
 
   revalidatePath("/dashboard/features/workout-tracker");
 }
+
+export async function getExercises() {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("exercises")
+      .select("*")
+      .order("name");
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch exercises:", error);
+    throw error;
+  }
+}

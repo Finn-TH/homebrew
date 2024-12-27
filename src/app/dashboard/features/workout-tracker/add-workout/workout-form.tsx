@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ExerciseForm } from "../components/exercise-form";
+import ExerciseSelector from "../components/exercise-selector";
 import { Exercise } from "../types";
-import { StrengthExerciseForm, CardioExerciseForm } from "./exercise-forms";
 import { addWorkout } from "../actions";
 import { getAllPresetWorkouts, PresetWorkout } from "../data/preset-workouts";
 
@@ -47,7 +48,7 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
   const [workoutType, setWorkoutType] = useState<"preset" | "custom">("preset");
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const [showExerciseSelector, setShowExerciseSelector] = useState(false);
   const router = useRouter();
   const presets = getAllPresetWorkouts();
 
@@ -89,31 +90,9 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
     }
   };
 
-  const addStrengthExercise = () => {
-    setExercises([
-      ...exercises,
-      {
-        type: "strength",
-        name: "",
-        sets: 3,
-        reps: 10,
-        weight: 0,
-      },
-    ]);
-    setShowTypeMenu(false);
-  };
-
-  const addCardioExercise = () => {
-    setExercises([
-      ...exercises,
-      {
-        type: "cardio",
-        name: "",
-        duration: 30,
-        distance: 0,
-      },
-    ]);
-    setShowTypeMenu(false);
+  const handleAddExercise = (exercise: Exercise) => {
+    setExercises([...exercises, exercise]);
+    setShowExerciseSelector(false);
   };
 
   const removeExercise = (index: number) => {
@@ -221,7 +200,7 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
                   <span className="text-[#8B4513] font-medium">Exercises</span>
                   <button
                     type="button"
-                    onClick={() => setShowTypeMenu(!showTypeMenu)}
+                    onClick={() => setShowExerciseSelector(true)}
                     className="flex items-center gap-2 text-[#8B4513]/80 hover:text-[#8B4513] 
                              transition-colors"
                   >
@@ -231,56 +210,29 @@ export default function WorkoutForm({ onComplete }: WorkoutFormProps) {
                 </div>
 
                 {/* Exercise List */}
-                {exercises.map((exercise, index) => (
-                  <div key={index} className="p-4 rounded-lg bg-[#8B4513]/5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Dumbbell className="h-4 w-4 text-[#8B4513]" />
-                        <span className="text-[#8B4513]">{exercise.name}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeExercise(index)}
-                        className="text-[#8B4513]/40 hover:text-[#8B4513] transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                    {exercise.type === "strength" && (
-                      <div className="mt-2 text-sm text-[#8B4513]/60">
-                        {exercise.sets} sets × {exercise.reps} reps
-                      </div>
-                    )}
-                    {exercise.type === "cardio" && (
-                      <div className="mt-2 text-sm text-[#8B4513]/60">
-                        {exercise.duration} minutes
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {/* Add Exercise Menu */}
-                {showTypeMenu && (
-                  <div className="flex gap-2 p-4 rounded-lg bg-[#8B4513]/5">
-                    <button
-                      type="button"
-                      onClick={addStrengthExercise}
-                      className="flex-1 px-4 py-2 rounded-lg bg-white text-[#8B4513] 
-                               hover:bg-[#8B4513]/5 transition-colors"
-                    >
-                      Strength Exercise
-                    </button>
-                    <button
-                      type="button"
-                      onClick={addCardioExercise}
-                      className="flex-1 px-4 py-2 rounded-lg bg-white text-[#8B4513] 
-                               hover:bg-[#8B4513]/5 transition-colors"
-                    >
-                      Cardio Exercise
-                    </button>
-                  </div>
-                )}
+                <div className="space-y-3">
+                  {exercises.map((exercise, index) => (
+                    <ExerciseForm
+                      key={index}
+                      exercise={exercise}
+                      onUpdate={(updated) => {
+                        const newExercises = [...exercises];
+                        newExercises[index] = updated;
+                        setExercises(newExercises);
+                      }}
+                      onRemove={() => removeExercise(index)}
+                    />
+                  ))}
+                </div>
               </div>
+
+              {/* Exercise Selector Modal */}
+              {showExerciseSelector && (
+                <ExerciseSelector
+                  onSelect={handleAddExercise}
+                  onClose={() => setShowExerciseSelector(false)}
+                />
+              )}
             </div>
           ) : null}
         </div>
