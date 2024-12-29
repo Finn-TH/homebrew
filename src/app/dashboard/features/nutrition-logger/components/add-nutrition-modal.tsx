@@ -1,181 +1,167 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
+import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { Dialog, Transition } from "@headlessui/react";
-import { Plus, Minus, Loader2, X } from "lucide-react";
+import { useState } from "react";
 import { getUserLocalDate } from "../utils/date";
+import FoodSearch from "./food-search";
+import { Minus, Plus, Trash2 } from "lucide-react";
 
 interface AddNutritionModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-interface FoodItem {
+interface SelectedFood {
+  id: string;
   name: string;
+  servingSize: number;
+  baseServingSize: number;
+  servingUnit: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
-  serving_size: number;
-  serving_unit: string;
 }
 
 export default function AddNutritionModal({
-  open,
-  onOpenChange,
+  isOpen,
+  onClose,
 }: AddNutritionModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mealName, setMealName] = useState("");
   const [mealType, setMealType] = useState<
     "breakfast" | "lunch" | "dinner" | "snack"
   >("breakfast");
-  const [foodItems, setFoodItems] = useState<FoodItem[]>([
-    {
-      name: "",
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      serving_size: 0,
-      serving_unit: "g",
-    },
-  ]);
+  const [selectedFoods, setSelectedFoods] = useState<SelectedFood[]>([]);
 
   const router = useRouter();
   const supabase = createClient();
 
-  const handleAddFoodItem = () => {
-    setFoodItems([
-      ...foodItems,
+  const handleFoodSelect = (food: any) => {
+    setSelectedFoods([
+      ...selectedFoods,
       {
-        name: "",
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-        serving_size: 0,
-        serving_unit: "g",
+        id: food.id,
+        name: food.name,
+        servingSize: food.serving_size,
+        baseServingSize: food.serving_size,
+        servingUnit: food.serving_unit,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
       },
     ]);
   };
 
-  const handleRemoveFoodItem = (index: number) => {
-    setFoodItems(foodItems.filter((_, i) => i !== index));
+  const updateServingSize = (index: number, increase: boolean) => {
+    const newFoods = [...selectedFoods];
+    const food = newFoods[index];
+    const multiplier = increase ? 0.5 : -0.5; // Adjust by 0.5 servings
+
+    // Don't allow less than 0.5 servings
+    if (!increase && food.servingSize <= food.baseServingSize * 0.5) return;
+
+    food.servingSize = food.servingSize + food.baseServingSize * multiplier;
+
+    // Update nutrition values based on new serving size
+    const ratio = food.servingSize / food.baseServingSize;
+    food.calories = Math.round(food.calories * ratio);
+    food.protein = Number((food.protein * ratio).toFixed(1));
+    food.carbs = Number((food.carbs * ratio).toFixed(1));
+    food.fat = Number((food.fat * ratio).toFixed(1));
+
+    setSelectedFoods(newFoods);
   };
 
-  const handleFoodItemChange = (
-    index: number,
-    field: keyof FoodItem,
-    value: string | number
-  ) => {
-    const newFoodItems = [...foodItems];
-    newFoodItems[index] = {
-      ...newFoodItems[index],
-      [field]:
-        field === "name" || field === "serving_unit" ? value : Number(value),
-    };
-    setFoodItems(newFoodItems);
+  const removeFood = (index: number) => {
+    setSelectedFoods(selectedFoods.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
-    if (isSubmitting) return;
+    if (!mealName || selectedFoods.length === 0) return;
 
     setIsSubmitting(true);
-    try {
-      // Insert meal
-      const { data: meal, error: mealError } = await supabase
-        .from("nutrition_meals")
-        .insert({
-          name: mealName,
-          meal_type: mealType,
-          date: getUserLocalDate(),
-        })
-        .select()
-        .single();
+    const user = (await supabase.auth.getUser()).data.user;
 
-      if (mealError) throw mealError;
-
-      // Insert food items
-      const { error: foodError } = await supabase
-        .from("nutrition_food_items")
-        .insert(
-          foodItems.map((item) => ({
-            ...item,
-            meal_id: meal.id,
-          }))
-        );
-
-      if (foodError) throw foodError;
-
-      router.refresh();
-      onOpenChange(false);
-
-      // Reset form
-      setMealName("");
-      setMealType("breakfast");
-      setFoodItems([
-        {
-          name: "",
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-          serving_size: 0,
-          serving_unit: "g",
-        },
-      ]);
-    } catch (error) {
-      console.error("Error adding meal:", error);
-    } finally {
+    if (!user) {
       setIsSubmitting(false);
+      return;
     }
+
+    // Create meal
+    const { data: meal, error: mealError } = await supabase
+      .from("nutrition_meals")
+      .insert({
+        user_id: user.id,
+        name: mealName,
+        date: getUserLocalDate(),
+        meal_type: mealType,
+      })
+      .select()
+      .single();
+
+    if (mealError || !meal) {
+      console.error("Error creating meal:", mealError);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Add food items
+    const { error: foodError } = await supabase
+      .from("nutrition_food_items")
+      .insert(
+        selectedFoods.map((food) => ({
+          meal_id: meal.id,
+          name: food.name,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          serving_size: food.servingSize,
+          serving_unit: food.servingUnit,
+        }))
+      );
+
+    if (foodError) {
+      console.error("Error adding food items:", foodError);
+    }
+
+    setIsSubmitting(false);
+    onClose();
+    router.refresh();
   };
 
   return (
-    <Transition show={open} as={Fragment}>
-      <Dialog onClose={() => onOpenChange(false)} className="relative z-50">
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        </Transition.Child>
-
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0 scale-95"
-            enterTo="opacity-100 scale-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100 scale-100"
-            leaveTo="opacity-0 scale-95"
-          >
-            <Dialog.Panel className="mx-auto max-w-2xl w-full rounded-xl bg-white p-6">
-              <div className="flex justify-between items-center mb-6">
-                <Dialog.Title className="text-xl font-semibold text-[#8B4513]">
+    <Dialog.Root open={isOpen} onOpenChange={onClose}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/40" />
+        <div className="fixed inset-0 flex items-center justify-center">
+          <Dialog.Content className="w-full max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl p-6 shadow-lg"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <Dialog.Title className="text-2xl font-semibold text-[#8B4513]">
                   Add Meal
                 </Dialog.Title>
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className="rounded-lg p-1 hover:bg-[#8B4513]/5"
-                >
-                  <X className="h-5 w-5 text-[#8B4513]/60" />
-                </button>
+                <Dialog.Close className="text-[#8B4513]/60 hover:text-[#8B4513]">
+                  <X className="h-5 w-5" />
+                </Dialog.Close>
               </div>
 
               <div className="space-y-6">
                 {/* Meal Details */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[#8B4513]">
+                  <div>
+                    <label className="text-sm font-medium text-[#8B4513]">
                       Meal Name
                     </label>
                     <input
@@ -183,17 +169,17 @@ export default function AddNutritionModal({
                       value={mealName}
                       onChange={(e) => setMealName(e.target.value)}
                       placeholder="Enter meal name"
-                      className="w-full rounded-lg border border-[#8B4513]/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
+                      className="w-full mt-1 rounded-lg border px-3 py-2"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[#8B4513]">
+                  <div>
+                    <label className="text-sm font-medium text-[#8B4513]">
                       Meal Type
                     </label>
                     <select
                       value={mealType}
                       onChange={(e) => setMealType(e.target.value as any)}
-                      className="w-full rounded-lg border border-[#8B4513]/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
+                      className="w-full mt-1 rounded-lg border px-3 py-2"
                     >
                       <option value="breakfast">Breakfast</option>
                       <option value="lunch">Lunch</option>
@@ -203,127 +189,77 @@ export default function AddNutritionModal({
                   </div>
                 </div>
 
-                {/* Food Items */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-[#8B4513]">
-                      Food Items
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleAddFoodItem}
-                      className="flex items-center gap-1 px-3 py-1 text-sm rounded-lg border border-[#8B4513]/20 hover:bg-[#8B4513]/5"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Item
-                    </button>
-                  </div>
-
-                  {foodItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-7 gap-2 items-start"
-                    >
-                      <div className="col-span-2">
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) =>
-                            handleFoodItemChange(index, "name", e.target.value)
-                          }
-                          placeholder="Food name"
-                          className="w-full rounded-lg border border-[#8B4513]/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="number"
-                          value={item.calories}
-                          onChange={(e) =>
-                            handleFoodItemChange(
-                              index,
-                              "calories",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Calories"
-                          className="w-full rounded-lg border border-[#8B4513]/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="number"
-                          value={item.protein}
-                          onChange={(e) =>
-                            handleFoodItemChange(
-                              index,
-                              "protein",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Protein"
-                          className="w-full rounded-lg border border-[#8B4513]/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="number"
-                          value={item.carbs}
-                          onChange={(e) =>
-                            handleFoodItemChange(index, "carbs", e.target.value)
-                          }
-                          placeholder="Carbs"
-                          className="w-full rounded-lg border border-[#8B4513]/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="number"
-                          value={item.fat}
-                          onChange={(e) =>
-                            handleFoodItemChange(index, "fat", e.target.value)
-                          }
-                          placeholder="Fat"
-                          className="w-full rounded-lg border border-[#8B4513]/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {foodItems.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveFoodItem(index)}
-                            className="p-2 rounded-lg hover:bg-[#8B4513]/5"
-                          >
-                            <Minus className="h-4 w-4 text-red-500" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                {/* Food Search */}
+                <div>
+                  <label className="text-sm font-medium text-[#8B4513]">
+                    Add Foods
+                  </label>
+                  <FoodSearch onSelect={handleFoodSelect} />
                 </div>
+
+                {/* Selected Foods */}
+                {selectedFoods.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-[#8B4513]">
+                      Selected Foods
+                    </label>
+                    {selectedFoods.map((food, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-[#8B4513]/5 rounded-lg"
+                      >
+                        <div>
+                          <div className="font-medium">{food.name}</div>
+                          <div className="text-sm text-[#8B4513]/60">
+                            {food.calories} cal | P: {food.protein}g C:{" "}
+                            {food.carbs}g F: {food.fat}g
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => updateServingSize(index, false)}
+                              className="p-1 hover:bg-[#8B4513]/10 rounded"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span>
+                              {food.servingSize} {food.servingUnit}
+                            </span>
+                            <button
+                              onClick={() => updateServingSize(index, true)}
+                              className="p-1 hover:bg-[#8B4513]/10 rounded"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => removeFood(index)}
+                            className="p-1 hover:bg-red-100 text-red-600 rounded"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Submit Button */}
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleSubmit}
-                    disabled={
-                      isSubmitting ||
-                      !mealName ||
-                      foodItems.some((item) => !item.name)
-                    }
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#8B4513] text-white hover:bg-[#8B4513]/90 disabled:bg-[#8B4513]/50"
-                  >
-                    {isSubmitting && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    Add Meal
-                  </button>
-                </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting || !mealName || selectedFoods.length === 0
+                  }
+                  className="w-full py-2 bg-[#8B4513] text-white rounded-lg hover:bg-[#8B4513]/90 disabled:opacity-50"
+                >
+                  {isSubmitting ? "Adding..." : "Add Meal"}
+                </button>
               </div>
-            </Dialog.Panel>
-          </Transition.Child>
+            </motion.div>
+          </Dialog.Content>
         </div>
-      </Dialog>
-    </Transition>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

@@ -90,8 +90,8 @@ export default function NutritionContent({
 
       {/* Add Meal Modal */}
       <AddNutritionModal
-        open={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
       />
     </div>
   );
