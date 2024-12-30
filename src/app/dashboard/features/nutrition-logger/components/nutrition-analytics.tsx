@@ -1,8 +1,8 @@
 "use client";
 
-import { NutritionMeal } from "../types";
-import { getUserLocalDate } from "../utils/date";
-import { subDays, format } from "date-fns";
+import { useState, useEffect } from "react";
+import { getAnalytics } from "../actions/get-analytics";
+import { format } from "date-fns";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -16,7 +16,6 @@ import {
   Legend,
 } from "chart.js";
 import { Line, Pie, Bar } from "react-chartjs-2";
-import { useState } from "react";
 
 ChartJS.register(
   CategoryScale,
@@ -30,90 +29,102 @@ ChartJS.register(
   Legend
 );
 
-interface NutritionAnalyticsProps {
-  meals: NutritionMeal[];
+// Define consistent colors for macronutrients
+const macroColors = {
+  protein: {
+    main: "rgba(183, 156, 237, 0.8)", // Muted purple/periwinkle
+    border: "rgba(183, 156, 237, 1)",
+  },
+  carbs: {
+    main: "rgba(237, 191, 156, 0.8)", // Warm apricot
+    border: "rgba(237, 191, 156, 1)",
+  },
+  fat: {
+    main: "rgba(156, 237, 183, 0.8)", // Soft sage
+    border: "rgba(156, 237, 183, 1)",
+  },
+};
+
+interface AnalyticsData {
+  dailyTotals: {
+    date: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }[];
+  macroPercentages: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  todaysMacros: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
 }
 
-export default function NutritionAnalytics({ meals }: NutritionAnalyticsProps) {
+export default function NutritionAnalytics() {
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<"week" | "month">("week");
 
-  // Get dates for either last 7 or 30 days based on selection
-  const getDates = () => {
-    const days = timeRange === "week" ? 7 : 30;
-    return Array.from({ length: days }, (_, i) => {
-      const date = subDays(new Date(getUserLocalDate()), i);
-      return format(date, "yyyy-MM-dd");
-    }).reverse();
-  };
+  useEffect(() => {
+    async function fetchAnalytics() {
+      try {
+        const days = timeRange === "week" ? 7 : 30;
+        const data = await getAnalytics(days);
+        setAnalyticsData(data);
+      } catch (err) {
+        setError("Failed to load analytics data");
+        console.error("Analytics error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-  const dates = getDates();
-  const dailyTotals = dates.map((date) => {
-    return meals
-      .filter((meal) => meal.date === date)
-      .reduce(
-        (totals, meal) => {
-          meal.nutrition_food_items.forEach((item) => {
-            totals.calories += item.calories;
-            totals.protein += item.protein;
-            totals.carbs += item.carbs;
-            totals.fat += item.fat;
-          });
-          return totals;
-        },
-        { calories: 0, protein: 0, carbs: 0, fat: 0 }
-      );
-  });
+    fetchAnalytics();
+  }, [timeRange]);
 
-  // Calculate macronutrient totals for today
-  const todaysMacros = meals
-    .filter((meal) => meal.date === getUserLocalDate())
-    .reduce(
-      (totals, meal) => {
-        meal.nutrition_food_items.forEach((item) => {
-          totals.protein += item.protein;
-          totals.carbs += item.carbs;
-          totals.fat += item.fat;
-        });
-        return totals;
-      },
-      { protein: 0, carbs: 0, fat: 0 }
+  if (isLoading) {
+    return (
+      <div className="h-64 flex items-center justify-center">
+        <div className="text-[#8B4513]/60">Loading analytics...</div>
+      </div>
     );
+  }
 
-  // Calculate total grams and percentages
-  const totalGrams =
-    todaysMacros.protein + todaysMacros.carbs + todaysMacros.fat;
-  const macroPercentages = {
-    protein: totalGrams
-      ? Math.round((todaysMacros.protein / totalGrams) * 100)
-      : 0,
-    carbs: totalGrams ? Math.round((todaysMacros.carbs / totalGrams) * 100) : 0,
-    fat: totalGrams ? Math.round((todaysMacros.fat / totalGrams) * 100) : 0,
-  };
+  if (error || !analyticsData) {
+    return (
+      <div className="h-64 flex items-center justify-center">
+        <div className="text-red-600">
+          {error || "Failed to load analytics"}
+        </div>
+      </div>
+    );
+  }
+
+  const { dailyTotals, macroPercentages } = analyticsData;
 
   const chartOptions = {
     responsive: true,
     plugins: {
       legend: {
         position: "top" as const,
+        labels: {
+          font: {
+            size: 14,
+            weight: "normal" as const,
+          },
+          padding: 16,
+        },
       },
     },
-  };
-
-  // Define consistent colors for macronutrients using a triadic color harmony
-  const macroColors = {
-    protein: {
-      main: "rgba(183, 156, 237, 0.8)", // Muted purple/periwinkle
-      border: "rgba(183, 156, 237, 1)",
-    },
-    carbs: {
-      main: "rgba(237, 191, 156, 0.8)", // Warm apricot
-      border: "rgba(237, 191, 156, 1)",
-    },
-    fat: {
-      main: "rgba(156, 237, 183, 0.8)", // Soft sage
-      border: "rgba(156, 237, 183, 1)",
-    },
-  };
+  } as const;
 
   return (
     <div className="space-y-6">
@@ -125,23 +136,23 @@ export default function NutritionAnalytics({ meals }: NutritionAnalyticsProps) {
           </h3>
           <Bar
             data={{
-              labels: dates
+              labels: dailyTotals
                 .slice(-7)
-                .map((date) => format(new Date(date), "MMM d")),
+                .map((day: any) => format(new Date(day.date), "MMM d")),
               datasets: [
                 {
                   label: "Protein",
-                  data: dailyTotals.slice(-7).map((day) => day.protein),
+                  data: dailyTotals.slice(-7).map((day: any) => day.protein),
                   backgroundColor: macroColors.protein.main,
                 },
                 {
                   label: "Carbs",
-                  data: dailyTotals.slice(-7).map((day) => day.carbs),
+                  data: dailyTotals.slice(-7).map((day: any) => day.carbs),
                   backgroundColor: macroColors.carbs.main,
                 },
                 {
                   label: "Fat",
-                  data: dailyTotals.slice(-7).map((day) => day.fat),
+                  data: dailyTotals.slice(-7).map((day: any) => day.fat),
                   backgroundColor: macroColors.fat.main,
                 },
               ],
@@ -166,9 +177,9 @@ export default function NutritionAnalytics({ meals }: NutritionAnalyticsProps) {
                 datasets: [
                   {
                     data: [
-                      todaysMacros.protein,
-                      todaysMacros.carbs,
-                      todaysMacros.fat,
+                      macroPercentages.protein,
+                      macroPercentages.carbs,
+                      macroPercentages.fat,
                     ],
                     backgroundColor: [
                       macroColors.protein.main,
@@ -199,35 +210,6 @@ export default function NutritionAnalytics({ meals }: NutritionAnalyticsProps) {
                 },
               }}
             />
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-sm text-[#8B4513]/60">Protein</div>
-              <div
-                className="font-semibold"
-                style={{ color: macroColors.protein.border }}
-              >
-                {Math.round(todaysMacros.protein)}g
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-[#8B4513]/60">Carbs</div>
-              <div
-                className="font-semibold"
-                style={{ color: macroColors.carbs.border }}
-              >
-                {Math.round(todaysMacros.carbs)}g
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-[#8B4513]/60">Fat</div>
-              <div
-                className="font-semibold"
-                style={{ color: macroColors.fat.border }}
-              >
-                {Math.round(todaysMacros.fat)}g
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -263,11 +245,13 @@ export default function NutritionAnalytics({ meals }: NutritionAnalyticsProps) {
         </div>
         <Line
           data={{
-            labels: dates.map((date) => format(new Date(date), "MMM d")),
+            labels: dailyTotals.map((day: any) =>
+              format(new Date(day.date), "MMM d")
+            ),
             datasets: [
               {
                 label: "Calories",
-                data: dailyTotals.map((day) => day.calories),
+                data: dailyTotals.map((day: any) => day.calories),
                 borderColor: "#8B4513",
                 backgroundColor: "rgba(139, 69, 19, 0.1)",
                 tension: 0.3,
@@ -327,15 +311,6 @@ export default function NutritionAnalytics({ meals }: NutritionAnalyticsProps) {
                 displayColors: false,
                 callbacks: {
                   label: (context) => `${context.parsed.y} calories`,
-                },
-              },
-              legend: {
-                labels: {
-                  font: {
-                    size: 14,
-                    weight: "normal",
-                  },
-                  padding: 16,
                 },
               },
             },

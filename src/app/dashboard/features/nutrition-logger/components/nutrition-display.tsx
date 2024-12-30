@@ -53,7 +53,7 @@ export default function NutritionDisplay({
   }
 
   if (viewType === "analytics") {
-    return <NutritionAnalytics meals={meals} />;
+    return <NutritionAnalytics />;
   }
 
   return (

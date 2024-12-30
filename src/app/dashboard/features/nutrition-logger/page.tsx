@@ -1,7 +1,12 @@
-import { createClient } from "@/utils/supabase/server";
 import FeatureLayout from "../../components/layout/feature-layout";
-import NutritionContent from "./components/nutrition-content";
-import { getWeekDates } from "./utils/date";
+import NutritionLoggerServer from "./server/nutrition-logger-server";
+import { Metadata } from "next";
+import { createClient } from "@/utils/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Nutrition Logger | Homebrew",
+  description: "Track your nutrition with Homebrew",
+};
 
 export default async function NutritionLoggerPage() {
   const supabase = await createClient();
@@ -13,28 +18,9 @@ export default async function NutritionLoggerPage() {
     throw new Error("User not authenticated");
   }
 
-  const { start: startDate, end: endDate } = getWeekDates();
-
-  const { data: nutritionMeals, error } = await supabase
-    .from("nutrition_meals")
-    .select(
-      `
-      *,
-      nutrition_food_items (*)
-    `
-    )
-    .eq("user_id", user.id)
-    .gte("date", startDate)
-    .lte("date", endDate)
-    .order("date", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching nutrition meals:", error);
-  }
-
   return (
     <FeatureLayout user={user} title="Nutrition Logger">
-      <NutritionContent initialMeals={nutritionMeals || []} />
+      <NutritionLoggerServer />
     </FeatureLayout>
   );
 }

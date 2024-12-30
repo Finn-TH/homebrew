@@ -1,8 +1,8 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
+import { searchFood } from "../actions/search-food";
 
 interface FoodSearchProps {
   onSelect: (food: CommonFood) => void;
@@ -27,32 +27,6 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
   const [results, setResults] = useState<CommonFood[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout>();
-  const supabase = createClient();
-
-  const searchFoods = useCallback(
-    async (query: string) => {
-      if (query.length < 2) {
-        setResults([]);
-        return;
-      }
-
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from("nutri_common_foods")
-        .select("*")
-        .ilike("name", `%${query}%`)
-        .limit(10);
-
-      if (error) {
-        console.error("Error searching foods:", error);
-        setResults([]);
-      } else {
-        setResults(data || []);
-      }
-      setIsLoading(false);
-    },
-    [supabase]
-  );
 
   const handleSearch = (query: string) => {
     setSearch(query);
@@ -63,8 +37,12 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
     }
 
     // Set new timeout
-    const timeout = setTimeout(() => {
-      searchFoods(query);
+    const timeout = setTimeout(async () => {
+      if (query.length < 2) return;
+      setIsLoading(true);
+      const results = await searchFood(query);
+      setResults(results);
+      setIsLoading(false);
     }, 300);
 
     setSearchTimeout(timeout);
