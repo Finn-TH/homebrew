@@ -4,10 +4,11 @@ import { NutritionMeal } from "../types";
 import { getUserLocalDate } from "../utils/date";
 import DailyView from "./daily-view";
 import WeeklyView from "./weekly-view";
+import NutritionAnalytics from "./nutrition-analytics";
 
 interface NutritionDisplayProps {
   meals: NutritionMeal[];
-  viewType: "daily" | "weekly";
+  viewType: "daily" | "weekly" | "analytics";
   onDeleteMeal: (mealId: string) => void;
 }
 
@@ -17,11 +18,8 @@ export default function NutritionDisplay({
   onDeleteMeal,
 }: NutritionDisplayProps) {
   const today = getUserLocalDate();
-
-  // Filter meals for daily view
   const dailyMeals = meals.filter((meal) => meal.date === today);
 
-  // Sort meals by meal type for better organization
   const sortByMealType = (meals: NutritionMeal[]) => {
     const mealTypeOrder = {
       breakfast: 0,
@@ -35,7 +33,6 @@ export default function NutritionDisplay({
     );
   };
 
-  // Calculate daily nutrition totals
   const calculateDailyTotals = (meals: NutritionMeal[]) => {
     return meals.reduce(
       (totals, meal) => {
@@ -53,6 +50,10 @@ export default function NutritionDisplay({
 
   if (viewType === "weekly") {
     return <WeeklyView meals={meals} onDeleteMeal={onDeleteMeal} />;
+  }
+
+  if (viewType === "analytics") {
+    return <NutritionAnalytics meals={meals} />;
   }
 
   return (

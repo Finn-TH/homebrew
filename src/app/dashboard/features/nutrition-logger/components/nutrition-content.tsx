@@ -15,7 +15,9 @@ export default function NutritionContent({
   initialMeals,
 }: NutritionContentProps) {
   const [meals, setMeals] = useState<NutritionMeal[]>(initialMeals);
-  const [viewType, setViewType] = useState<"daily" | "weekly">("daily");
+  const [viewType, setViewType] = useState<"daily" | "weekly" | "analytics">(
+    "daily"
+  );
   const router = useRouter();
   const supabase = createClient();
 
@@ -53,10 +55,10 @@ export default function NutritionContent({
     <div className="space-y-6">
       {/* Header Controls */}
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2 bg-white/80 rounded-lg p-1">
+        <div className="flex gap-2">
           <button
             onClick={() => setViewType("daily")}
-            className={`px-4 py-2 rounded-md transition-colors ${
+            className={`px-4 py-2 rounded-lg transition-colors ${
               viewType === "daily"
                 ? "bg-[#8B4513] text-white"
                 : "text-[#8B4513] hover:bg-[#8B4513]/5"
@@ -66,13 +68,23 @@ export default function NutritionContent({
           </button>
           <button
             onClick={() => setViewType("weekly")}
-            className={`px-4 py-2 rounded-md transition-colors ${
+            className={`px-4 py-2 rounded-lg transition-colors ${
               viewType === "weekly"
                 ? "bg-[#8B4513] text-white"
                 : "text-[#8B4513] hover:bg-[#8B4513]/5"
             }`}
           >
             Weekly
+          </button>
+          <button
+            onClick={() => setViewType("analytics")}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              viewType === "analytics"
+                ? "bg-[#8B4513] text-white"
+                : "text-[#8B4513] hover:bg-[#8B4513]/5"
+            }`}
+          >
+            Analytics
           </button>
         </div>
 
