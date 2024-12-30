@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { NutritionMeal } from "../types";
@@ -18,6 +18,14 @@ export default function NutritionContent({
   const [viewType, setViewType] = useState<"daily" | "weekly">("daily");
   const router = useRouter();
   const supabase = createClient();
+
+  const handleNewMeal = (meal: NutritionMeal) => {
+    setMeals((prevMeals) => [...prevMeals, meal]);
+  };
+
+  const handleDeleteMeal = (mealId: string) => {
+    setMeals((prevMeals) => prevMeals.filter((meal) => meal.id !== mealId));
+  };
 
   // Real-time updates
   useEffect(() => {
@@ -68,11 +76,15 @@ export default function NutritionContent({
           </button>
         </div>
 
-        <AddMealButton />
+        <AddMealButton onMealAdded={handleNewMeal} />
       </div>
 
       {/* Main Content */}
-      <NutritionDisplay meals={meals} viewType={viewType} />
+      <NutritionDisplay
+        meals={meals}
+        viewType={viewType}
+        onDeleteMeal={handleDeleteMeal}
+      />
     </div>
   );
 }

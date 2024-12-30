@@ -5,14 +5,17 @@ import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getUserLocalDate } from "../utils/date";
 import FoodSearch from "./food-search";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { NutritionMeal } from "../types";
+import { addMeal } from "../actions";
 
 interface AddNutritionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onMealAdded?: (meal: NutritionMeal) => void;
 }
 
 interface SelectedFood {
@@ -30,6 +33,7 @@ interface SelectedFood {
 export default function AddNutritionModal({
   isOpen,
   onClose,
+  onMealAdded,
 }: AddNutritionModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mealName, setMealName] = useState("");
@@ -82,59 +86,36 @@ export default function AddNutritionModal({
     setSelectedFoods(selectedFoods.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
-    if (!mealName || selectedFoods.length === 0) return;
+  const resetForm = () => {
+    setMealName("");
+    setMealType("breakfast");
+    setSelectedFoods([]);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
-    const user = (await supabase.auth.getUser()).data.user;
-
-    if (!user) {
+    try {
+      const newMeal = await addMeal(mealName, mealType, selectedFoods);
+      if (newMeal) {
+        onMealAdded?.(newMeal);
+        resetForm();
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error adding meal:", error);
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    // Create meal
-    const { data: meal, error: mealError } = await supabase
-      .from("nutrition_meals")
-      .insert({
-        user_id: user.id,
-        name: mealName,
-        date: getUserLocalDate(),
-        meal_type: mealType,
-      })
-      .select()
-      .single();
-
-    if (mealError || !meal) {
-      console.error("Error creating meal:", mealError);
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Add food items
-    const { error: foodError } = await supabase
-      .from("nutrition_food_items")
-      .insert(
-        selectedFoods.map((food) => ({
-          meal_id: meal.id,
-          name: food.name,
-          calories: food.calories,
-          protein: food.protein,
-          carbs: food.carbs,
-          fat: food.fat,
-          serving_size: food.servingSize,
-          serving_unit: food.servingUnit,
-        }))
-      );
-
-    if (foodError) {
-      console.error("Error adding food items:", foodError);
-    }
-
-    setIsSubmitting(false);
-    onClose();
-    router.refresh();
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>

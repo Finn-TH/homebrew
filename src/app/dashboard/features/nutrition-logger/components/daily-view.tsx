@@ -13,9 +13,14 @@ interface DailyViewProps {
     carbs: number;
     fat: number;
   };
+  onDeleteMeal: (mealId: string) => void;
 }
 
-export default function DailyView({ meals, nutritionTotals }: DailyViewProps) {
+export default function DailyView({
+  meals,
+  nutritionTotals,
+  onDeleteMeal,
+}: DailyViewProps) {
   const mealTypes = [
     { type: "breakfast", icon: Coffee, label: "Breakfast" },
     { type: "lunch", icon: Sun, label: "Lunch" },
@@ -80,7 +85,7 @@ export default function DailyView({ meals, nutritionTotals }: DailyViewProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <NutritionRow meal={meal} />
+                        <NutritionRow meal={meal} onDeleteMeal={onDeleteMeal} />
                       </motion.div>
                     ))}
                   </div>

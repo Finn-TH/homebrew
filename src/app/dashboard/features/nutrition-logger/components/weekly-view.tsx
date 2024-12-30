@@ -17,9 +17,10 @@ import NutritionRow from "./nutrition-row";
 
 interface WeeklyViewProps {
   meals: NutritionMeal[];
+  onDeleteMeal: (mealId: string) => void;
 }
 
-export default function WeeklyView({ meals }: WeeklyViewProps) {
+export default function WeeklyView({ meals, onDeleteMeal }: WeeklyViewProps) {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const today = getUserLocalDate();
@@ -220,7 +221,11 @@ export default function WeeklyView({ meals }: WeeklyViewProps) {
             {weekDays
               .find((day) => day.date === expandedDay)
               ?.meals.map((meal) => (
-                <NutritionRow key={meal.id} meal={meal} />
+                <NutritionRow
+                  key={meal.id}
+                  meal={meal}
+                  onDeleteMeal={onDeleteMeal}
+                />
               ))}
           </motion.div>
         )}

@@ -8,11 +8,13 @@ import WeeklyView from "./weekly-view";
 interface NutritionDisplayProps {
   meals: NutritionMeal[];
   viewType: "daily" | "weekly";
+  onDeleteMeal: (mealId: string) => void;
 }
 
 export default function NutritionDisplay({
   meals,
   viewType,
+  onDeleteMeal,
 }: NutritionDisplayProps) {
   const today = getUserLocalDate();
 
@@ -50,13 +52,14 @@ export default function NutritionDisplay({
   };
 
   if (viewType === "weekly") {
-    return <WeeklyView meals={meals} />;
+    return <WeeklyView meals={meals} onDeleteMeal={onDeleteMeal} />;
   }
 
   return (
     <DailyView
       meals={sortByMealType(dailyMeals)}
       nutritionTotals={calculateDailyTotals(dailyMeals)}
+      onDeleteMeal={onDeleteMeal}
     />
   );
 }
