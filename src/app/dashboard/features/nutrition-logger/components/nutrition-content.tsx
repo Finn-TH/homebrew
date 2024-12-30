@@ -4,11 +4,8 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { NutritionMeal } from "../types";
-import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
-import AddNutritionModal from "./add-nutrition-modal";
+import AddMealButton from "./add-meal-button";
 import NutritionDisplay from "./nutrition-display";
-import useKeyboardShortcut from "../utils/use-keyboard-shortcut";
 
 interface NutritionContentProps {
   initialMeals: NutritionMeal[];
@@ -18,13 +15,9 @@ export default function NutritionContent({
   initialMeals,
 }: NutritionContentProps) {
   const [meals, setMeals] = useState<NutritionMeal[]>(initialMeals);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewType, setViewType] = useState<"daily" | "weekly">("daily");
   const router = useRouter();
   const supabase = createClient();
-
-  // Keyboard shortcut for adding new meal
-  useKeyboardShortcut("n", () => setIsAddModalOpen(true), { ctrlKey: true });
 
   // Real-time updates
   useEffect(() => {
@@ -75,24 +68,11 @@ export default function NutritionContent({
           </button>
         </div>
 
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#8B4513] text-white rounded-lg hover:bg-[#8B4513]/90 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Add Meal
-          <span className="text-xs opacity-75 ml-2">Ctrl+N</span>
-        </button>
+        <AddMealButton />
       </div>
 
       {/* Main Content */}
       <NutritionDisplay meals={meals} viewType={viewType} />
-
-      {/* Add Meal Modal */}
-      <AddNutritionModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-      />
     </div>
   );
 }
