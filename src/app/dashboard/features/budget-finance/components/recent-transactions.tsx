@@ -2,35 +2,15 @@
 
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { format } from "date-fns";
+import { Transaction } from "../types";
 
-export default function RecentTransactions() {
-  const transactions = [
-    {
-      id: "1",
-      type: "expense",
-      amount: 45.99,
-      category: "Groceries",
-      date: new Date(),
-      note: "Weekly groceries",
-    },
-    {
-      id: "2",
-      type: "income",
-      amount: 2500,
-      category: "Salary",
-      date: new Date(Date.now() - 86400000),
-      note: "Monthly salary",
-    },
-    {
-      id: "3",
-      type: "expense",
-      amount: 89.99,
-      category: "Utilities",
-      date: new Date(Date.now() - 172800000),
-      note: "Electricity bill",
-    },
-  ];
+interface RecentTransactionsProps {
+  transactions: Transaction[];
+}
 
+export default function RecentTransactions({
+  transactions,
+}: RecentTransactionsProps) {
   return (
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
       <h2 className="text-xl font-semibold text-[#8B4513] mb-6">
@@ -57,10 +37,10 @@ export default function RecentTransactions() {
               </div>
               <div>
                 <div className="font-medium text-[#8B4513]">
-                  {transaction.category}
+                  {transaction.category.name}
                 </div>
                 <div className="text-sm text-[#8B4513]/60">
-                  {transaction.note}
+                  {transaction.description}
                 </div>
               </div>
             </div>
@@ -74,10 +54,10 @@ export default function RecentTransactions() {
                 }`}
               >
                 {transaction.type === "expense" ? "-" : "+"}$
-                {transaction.amount.toFixed(2)}
+                {Number(transaction.amount).toFixed(2)}
               </div>
               <div className="text-sm text-[#8B4513]/60">
-                {format(transaction.date, "MMM d, yyyy")}
+                {format(new Date(transaction.date), "MMM d, yyyy")}
               </div>
             </div>
           </div>

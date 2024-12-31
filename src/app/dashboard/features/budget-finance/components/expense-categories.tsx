@@ -1,40 +1,18 @@
 "use client";
 
+import { Category, Transaction } from "../types";
 import { motion } from "framer-motion";
 
-export default function ExpenseCategories() {
-  const categories = [
-    {
-      name: "Groceries",
-      spent: 400,
-      budget: 500,
-      gradient: "from-emerald-400 to-emerald-500",
-    },
-    {
-      name: "Utilities",
-      spent: 150,
-      budget: 200,
-      gradient: "from-blue-400 to-blue-500",
-    },
-    {
-      name: "Entertainment",
-      spent: 200,
-      budget: 300,
-      gradient: "from-purple-400 to-purple-500",
-    },
-    {
-      name: "Transport",
-      spent: 120,
-      budget: 150,
-      gradient: "from-orange-400 to-orange-500",
-    },
-    {
-      name: "Other",
-      spent: 80,
-      budget: 100,
-      gradient: "from-gray-400 to-gray-500",
-    },
-  ];
+interface ExpenseCategoriesProps {
+  categories: Category[];
+  transactions: Transaction[];
+}
+
+export default function ExpenseCategories({
+  categories,
+  transactions,
+}: ExpenseCategoriesProps) {
+  const expenseCategories = categories.filter((cat) => cat.type === "expense");
 
   return (
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
@@ -43,20 +21,29 @@ export default function ExpenseCategories() {
       </h2>
 
       <div className="space-y-5">
-        {categories.map((category) => {
-          const percentage = (category.spent / category.budget) * 100;
+        {expenseCategories.map((category) => {
+          const categoryTransactions = transactions.filter(
+            (t) => t.category_id === category.id && t.type === "expense"
+          );
+
+          const spent = categoryTransactions.reduce(
+            (sum, t) => sum + Number(t.amount),
+            0
+          );
+
+          const percentage = (spent / category.monthly_limit) * 100;
 
           return (
-            <div key={category.name} className="space-y-2">
+            <div key={category.id} className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-[#8B4513]">{category.name}</span>
                 <span className="text-[#8B4513]/60 tabular-nums ml-8">
-                  ${category.spent} / ${category.budget}
+                  ${spent.toFixed(2)} / ${category.monthly_limit.toFixed(2)}
                 </span>
               </div>
               <div className="h-2.5 bg-[#8B4513]/5 rounded-full overflow-hidden">
                 <motion.div
-                  className={`h-full bg-gradient-to-r ${category.gradient}`}
+                  className={`h-full ${category.color}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(percentage, 100)}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}

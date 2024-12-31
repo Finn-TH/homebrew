@@ -1,10 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
+import { Category, Transaction, SavingsGoal } from "./types";
 import BudgetOverview from "./components/budget-overview";
 import RecentTransactions from "./components/recent-transactions";
 import ExpenseCategories from "./components/expense-categories";
 import SavingsGoals from "./components/savings-goals";
 import QuickExpense from "./components/quick-expense";
-import { Plus } from "lucide-react";
 
 export default async function BudgetFinancePage() {
   const supabase = await createClient();
@@ -12,36 +12,77 @@ export default async function BudgetFinancePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  // Fetch all required data
+  const { data: settings } = await supabase
+    .from("budget_user_settings")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  const monthlyBudget = settings?.monthly_budget || 3000; // Default to 3000 if not set
+
+  // Fetch all required data with proper typing
+  const { data: categories } = await supabase
+    .from("budget_categories")
+    .select("*")
+    .eq("user_id", user.id)
+    .returns<Category[]>();
+
+  const { data: transactions } = await supabase
+    .from("budget_transactions")
+    .select(
+      `
+      *,
+      category:budget_categories(name, color)
+    `
+    )
+    .eq("user_id", user.id)
+    .order("date", { ascending: false })
+    .limit(10)
+    .returns<Transaction[]>();
+
+  const { data: savingsGoals } = await supabase
+    .from("budget_savings_goals")
+    .select("*")
+    .eq("user_id", user.id)
+    .returns<SavingsGoal[]>();
+
   return (
-    <div className="relative mx-auto max-w-7xl p-8 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="relative mx-auto max-w-7xl p-8">
+      <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-[#8B4513]">Budget & Finance</h1>
-        <button className="px-4 py-2 bg-[#8B4513]/90 hover:bg-[#8B4513] text-white rounded-lg flex items-center gap-2 transition-colors">
-          <Plus className="h-5 w-5" />
-          Add Expense
-        </button>
+        <QuickExpense categories={categories || []} />
       </div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Monthly Overview Card */}
-        <div className="col-span-full">
-          <BudgetOverview />
+      <div className="grid grid-cols-12 gap-8">
+        {/* Left Column - Monthly Overview & Recent Transactions */}
+        <div className="col-span-8 space-y-8">
+          <div className="bg-white/80 rounded-xl p-6">
+            <BudgetOverview
+              transactions={transactions || []}
+              monthlyBudget={monthlyBudget}
+            />
+          </div>
+          <div className="bg-white/80 rounded-xl p-6">
+            <RecentTransactions transactions={transactions || []} />
+          </div>
         </div>
 
-        {/* Expense Categories */}
-        <div className="md:col-span-1">
-          <ExpenseCategories />
-        </div>
-
-        {/* Savings Goals */}
-        <div className="md:col-span-1">
-          <SavingsGoals />
-        </div>
-
-        {/* Recent Transactions */}
-        <div className="col-span-full">
-          <RecentTransactions />
+        {/* Right Column - Savings Goals & Expense Categories */}
+        <div className="col-span-4 space-y-8">
+          <div className="bg-white/80 rounded-xl p-6">
+            <SavingsGoals goals={savingsGoals || []} />
+          </div>
+          <div className="bg-white/80 rounded-xl p-6">
+            <ExpenseCategories
+              categories={categories || []}
+              transactions={transactions || []}
+            />
+          </div>
         </div>
       </div>
     </div>
