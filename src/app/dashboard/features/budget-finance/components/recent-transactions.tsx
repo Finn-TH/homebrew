@@ -4,7 +4,6 @@ import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function RecentTransactions() {
-  // Mock data - will be replaced with real data
   const transactions = [
     {
       id: "1",
@@ -19,7 +18,7 @@ export default function RecentTransactions() {
       type: "income",
       amount: 2500,
       category: "Salary",
-      date: new Date(Date.now() - 86400000), // Yesterday
+      date: new Date(Date.now() - 86400000),
       note: "Monthly salary",
     },
     {
@@ -27,14 +26,14 @@ export default function RecentTransactions() {
       type: "expense",
       amount: 89.99,
       category: "Utilities",
-      date: new Date(Date.now() - 172800000), // 2 days ago
+      date: new Date(Date.now() - 172800000),
       note: "Electricity bill",
     },
   ];
 
   return (
-    <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-      <h2 className="text-xl font-semibold text-[#8B4513] mb-4">
+    <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
+      <h2 className="text-xl font-semibold text-[#8B4513] mb-6">
         Recent Transactions
       </h2>
 
@@ -42,14 +41,20 @@ export default function RecentTransactions() {
         {transactions.map((transaction) => (
           <div
             key={transaction.id}
-            className="flex items-center justify-between p-4 rounded-lg hover:bg-[#8B4513]/5 transition-colors"
+            className="flex items-center justify-between py-4 px-6 rounded-lg hover:bg-[#8B4513]/[0.03] transition-colors"
           >
             <div className="flex items-center gap-4">
-              {transaction.type === "expense" ? (
-                <ArrowDownCircle className="h-8 w-8 text-red-500" />
-              ) : (
-                <ArrowUpCircle className="h-8 w-8 text-green-500" />
-              )}
+              <div
+                className={`p-2 rounded-full ${
+                  transaction.type === "expense" ? "bg-red-100" : "bg-green-100"
+                }`}
+              >
+                {transaction.type === "expense" ? (
+                  <ArrowDownCircle className="h-5 w-5 text-red-500" />
+                ) : (
+                  <ArrowUpCircle className="h-5 w-5 text-green-500" />
+                )}
+              </div>
               <div>
                 <div className="font-medium text-[#8B4513]">
                   {transaction.category}
@@ -62,7 +67,7 @@ export default function RecentTransactions() {
 
             <div className="text-right">
               <div
-                className={`font-medium ${
+                className={`font-medium tabular-nums ${
                   transaction.type === "expense"
                     ? "text-red-500"
                     : "text-green-500"

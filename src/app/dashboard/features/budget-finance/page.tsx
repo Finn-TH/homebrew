@@ -4,6 +4,7 @@ import RecentTransactions from "./components/recent-transactions";
 import ExpenseCategories from "./components/expense-categories";
 import SavingsGoals from "./components/savings-goals";
 import QuickExpense from "./components/quick-expense";
+import { Plus } from "lucide-react";
 
 export default async function BudgetFinancePage() {
   const supabase = await createClient();
@@ -15,7 +16,10 @@ export default async function BudgetFinancePage() {
     <div className="relative mx-auto max-w-7xl p-8 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-[#8B4513]">Budget & Finance</h1>
-        <QuickExpense />
+        <button className="px-4 py-2 bg-[#8B4513]/90 hover:bg-[#8B4513] text-white rounded-lg flex items-center gap-2 transition-colors">
+          <Plus className="h-5 w-5" />
+          Add Expense
+        </button>
       </div>
 
       {/* Main Grid Layout */}
