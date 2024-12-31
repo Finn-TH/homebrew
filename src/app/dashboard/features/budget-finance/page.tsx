@@ -5,6 +5,7 @@ import RecentTransactions from "./components/recent-transactions";
 import ExpenseCategories from "./components/expense-categories";
 import SavingsGoals from "./components/savings-goals";
 import QuickExpense from "./components/quick-expense";
+import { startOfWeek, endOfWeek } from "date-fns";
 
 export default async function BudgetFinancePage() {
   const supabase = await createClient();
@@ -25,25 +26,22 @@ export default async function BudgetFinancePage() {
 
   const monthlyBudget = settings?.monthly_budget || 3000; // Default to 3000 if not set
 
-  // Fetch all required data with proper typing
-  const { data: categories } = await supabase
-    .from("budget_categories")
-    .select("*")
-    .eq("user_id", user.id)
-    .returns<Category[]>();
+  // Get start and end of current week
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start from Monday
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
 
+  // Fetch only this week's transactions
   const { data: transactions } = await supabase
     .from("budget_transactions")
-    .select(
-      `
-      *,
-      category:budget_categories(name, color)
-    `
-    )
-    .eq("user_id", user.id)
-    .order("date", { ascending: false })
-    .limit(10)
-    .returns<Transaction[]>();
+    .select("*, category:budget_categories(*)")
+    .gte("date", weekStart.toISOString())
+    .lte("date", weekEnd.toISOString())
+    .order("date", { ascending: false });
+
+  // Fetch all categories
+  const { data: categories } = await supabase
+    .from("budget_categories")
+    .select("*");
 
   const { data: savingsGoals } = await supabase
     .from("budget_savings_goals")
@@ -68,7 +66,10 @@ export default async function BudgetFinancePage() {
             />
           </div>
           <div className="bg-white/80 rounded-xl p-6">
-            <RecentTransactions transactions={transactions || []} />
+            <RecentTransactions
+              transactions={transactions || []}
+              categories={categories || []}
+            />
           </div>
         </div>
 

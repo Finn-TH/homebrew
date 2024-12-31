@@ -10,6 +10,7 @@ export async function addTransaction(formData: FormData): Promise<void> {
     const category_id = formData.get("category_id") as string;
     const description = formData.get("description") as string;
     const type = formData.get("type") as "income" | "expense";
+    const date = formData.get("date") as string;
 
     const supabase = await createClient();
     const {
@@ -24,7 +25,7 @@ export async function addTransaction(formData: FormData): Promise<void> {
       type,
       amount,
       description,
-      date: new Date().toISOString(),
+      date: date || new Date().toISOString(),
     });
 
     if (error) throw error;
@@ -92,6 +93,30 @@ export async function updateMonthlyBudget(formData: FormData): Promise<void> {
     revalidatePath("/dashboard/features/budget-finance");
   } catch (error) {
     console.error("Failed to update monthly budget:", error);
+    throw error;
+  }
+}
+
+export async function deleteTransaction(id: string): Promise<void> {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { error } = await supabase
+      .from("budget_transactions")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id); // Add this for security
+
+    if (error) throw error;
+    revalidatePath("/dashboard/features/budget-finance");
+  } catch (error) {
+    console.error("Failed to delete transaction:", error);
     throw error;
   }
 }

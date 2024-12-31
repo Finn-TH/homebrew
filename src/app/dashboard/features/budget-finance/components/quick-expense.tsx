@@ -6,6 +6,7 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { addTransaction } from "../actions";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 interface QuickExpenseProps {
   categories: Category[];
@@ -19,6 +20,7 @@ export default function QuickExpense({ categories }: QuickExpenseProps) {
     amount: "",
     description: "",
     category_id: "",
+    date: format(new Date(), "yyyy-MM-dd"),
   });
 
   const router = useRouter();
@@ -34,6 +36,7 @@ export default function QuickExpense({ categories }: QuickExpenseProps) {
       form.append("amount", formData.amount);
       form.append("description", formData.description);
       form.append("category_id", formData.category_id);
+      form.append("date", formData.date);
 
       await addTransaction(form);
       setIsOpen(false);
@@ -42,6 +45,7 @@ export default function QuickExpense({ categories }: QuickExpenseProps) {
         amount: "",
         description: "",
         category_id: "",
+        date: format(new Date(), "yyyy-MM-dd"),
       });
     } catch (error) {
       console.error("Failed to add transaction:", error);
@@ -149,6 +153,19 @@ export default function QuickExpense({ categories }: QuickExpenseProps) {
                 }
                 className="w-full px-4 py-2 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
                 placeholder="Enter description"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm text-[#8B4513]/70">Date</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, date: e.target.value }))
+                }
+                className="w-full px-4 py-2 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
+                required
               />
             </div>
 
