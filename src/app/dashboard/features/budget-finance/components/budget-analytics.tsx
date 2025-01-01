@@ -13,6 +13,7 @@ import {
   PiggyBank,
   BarChart3,
   Target,
+  PieChart,
 } from "lucide-react";
 import { useState } from "react";
 import { formatMoney } from "../utils/money";
@@ -23,6 +24,30 @@ import {
   calculateCategoryTotals,
   calculateGoalProgress,
 } from "../utils/calculations";
+import { Line, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from "chart.js";
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 interface BudgetAnalyticsProps {
   transactions: Transaction[];
@@ -53,6 +78,58 @@ export default function BudgetAnalytics({
     currentTotals.expenses
   );
   const categoryTotals = calculateCategoryTotals(currentMonthTransactions);
+
+  // Prepare data for charts
+  const categoryChartData = {
+    labels: Object.keys(categoryTotals),
+    datasets: [
+      {
+        data: Object.values(categoryTotals),
+        backgroundColor: [
+          "#8B4513",
+          "#A0522D",
+          "#B8860B",
+          "#CD853F",
+          "#D2691E",
+          "#DEB887",
+        ],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const date = subMonths(currentDate, 5 - i);
+    const monthTransactions = filterTransactionsByMonth(transactions, date);
+    const totals = calculateMonthlyTotals(monthTransactions);
+    return {
+      month: format(date, "MMM"),
+      income: totals.income,
+      expenses: totals.expenses,
+    };
+  });
+
+  const trendChartData = {
+    labels: last6Months.map((d) => d.month),
+    datasets: [
+      {
+        label: "Income",
+        data: last6Months.map((d) => d.income),
+        borderColor: "#22C55E",
+        backgroundColor: "#22C55E20",
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: "Expenses",
+        data: last6Months.map((d) => d.expenses),
+        borderColor: "#EF4444",
+        backgroundColor: "#EF444420",
+        fill: true,
+        tension: 0.4,
+      },
+    ],
+  };
 
   return (
     <div className="space-y-6">
@@ -242,6 +319,87 @@ export default function BudgetAnalytics({
                   </div>
                 </div>
               ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Category Distribution */}
+        <div className="bg-white/80 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-[#8B4513]/10 rounded-xl">
+              <PieChart className="w-5 h-5 text-[#8B4513]" />
+            </div>
+            <h3 className="text-lg font-medium text-[#8B4513]">
+              Spending Distribution
+            </h3>
+          </div>
+          <div className="h-[300px] flex items-center justify-center">
+            <Pie
+              data={categoryChartData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: "bottom",
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      font: {
+                        size: 12,
+                      },
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Income vs Expenses Trend */}
+        <div className="bg-white/80 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-[#8B4513]/10 rounded-xl">
+              <TrendingUp className="w-5 h-5 text-[#8B4513]" />
+            </div>
+            <h3 className="text-lg font-medium text-[#8B4513]">
+              Income vs Expenses
+            </h3>
+          </div>
+          <div className="h-[300px]">
+            <Line
+              data={trendChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: "bottom",
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      font: {
+                        size: 12,
+                      },
+                    },
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    grid: {
+                      color: "#8B451310",
+                    },
+                  },
+                  x: {
+                    grid: {
+                      display: false,
+                    },
+                  },
+                },
+              }}
+            />
           </div>
         </div>
       </div>
