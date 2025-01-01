@@ -122,18 +122,59 @@ export async function updateMonthlyBudget(formData: FormData): Promise<void> {
 export async function deleteTransaction(id: string): Promise<void> {
   try {
     const supabase = await createClient();
-
-    // Get the current user
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
     if (!user) throw new Error("Not authenticated");
 
+    // First get the transaction details
+    const { data: transaction } = await supabase
+      .from("budget_transactions")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (!transaction) throw new Error("Transaction not found");
+
+    // If it's a savings transaction, update the savings goal
+    if (transaction.is_savings_transaction) {
+      // Extract goal name from description
+      const goalName = transaction.description.includes("Withdrawal from")
+        ? transaction.description.replace("Withdrawal from ", "")
+        : transaction.description.replace("Contribution to ", "");
+
+      // Get the savings goal
+      const { data: goal } = await supabase
+        .from("budget_savings_goals")
+        .select("current_amount")
+        .eq("name", goalName)
+        .eq("user_id", user.id)
+        .single();
+
+      if (goal) {
+        // If it was an expense (contribution), subtract from goal
+        // If it was income (withdrawal), add back to goal
+        const newAmount =
+          transaction.type === "expense"
+            ? goal.current_amount - transaction.amount
+            : goal.current_amount + transaction.amount;
+
+        // Update the savings goal
+        await supabase
+          .from("budget_savings_goals")
+          .update({ current_amount: newAmount })
+          .eq("name", goalName)
+          .eq("user_id", user.id);
+      }
+    }
+
+    // Delete the transaction
     const { error } = await supabase
       .from("budget_transactions")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id); // Add this for security
+      .eq("user_id", user.id);
 
     if (error) throw error;
     revalidatePath("/dashboard/features/budget-finance");
