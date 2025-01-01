@@ -99,6 +99,7 @@ export default function BudgetClient({
         <BudgetAnalytics
           transactions={transactions}
           monthlyBudget={monthlyBudget}
+          goals={savingsGoals}
         />
       )}
     </div>

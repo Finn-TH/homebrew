@@ -127,3 +127,13 @@ export const calculateAvailableToContribute = (
     percentage: Math.min((availableAmount / totalBudget) * 100, 100),
   };
 };
+
+export function calculateCategoryTotals(transactions: Transaction[]) {
+  return transactions.reduce((acc, transaction) => {
+    if (transaction.type === "expense" && transaction.category) {
+      const categoryName = transaction.category.name;
+      acc[categoryName] = (acc[categoryName] || 0) + transaction.amount;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+}
