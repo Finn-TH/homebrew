@@ -270,3 +270,103 @@ export async function createSavingsGoal(
     throw error;
   }
 }
+
+export async function deleteSavingsGoal(goalId: string): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("Not authenticated");
+
+    // Get the goal name first
+    const { data: goal } = await supabase
+      .from("budget_savings_goals")
+      .select("name")
+      .eq("id", goalId)
+      .single();
+
+    if (!goal) throw new Error("Goal not found");
+
+    // Delete all related transactions first
+    await supabase
+      .from("budget_transactions")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("is_savings_transaction", true)
+      .or(`description.ilike.%${goal.name}%`);
+
+    // Then delete the goal
+    const { error } = await supabase
+      .from("budget_savings_goals")
+      .delete()
+      .eq("id", goalId)
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+    revalidatePath("/dashboard/features/budget-finance");
+  } catch (error) {
+    console.error("Failed to delete savings goal:", error);
+    throw error;
+  }
+}
+
+interface EditSavingsGoalParams {
+  id: string;
+  name: string;
+  target_amount: number;
+  target_date: string | null;
+}
+
+export async function editSavingsGoal(
+  params: EditSavingsGoalParams
+): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("Not authenticated");
+
+    // Get the old goal name first
+    const { data: oldGoal } = await supabase
+      .from("budget_savings_goals")
+      .select("name")
+      .eq("id", params.id)
+      .single();
+
+    if (!oldGoal) throw new Error("Goal not found");
+
+    // Update the goal
+    await supabase
+      .from("budget_savings_goals")
+      .update({
+        name: params.name,
+        target_amount: params.target_amount,
+        target_date: params.target_date,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", params.id)
+      .eq("user_id", user.id);
+
+    // Update related transactions if name changed
+    if (oldGoal.name !== params.name) {
+      await supabase
+        .from("budget_transactions")
+        .update({
+          description: (description: string) =>
+            description.replace(oldGoal.name, params.name),
+        })
+        .eq("user_id", user.id)
+        .eq("is_savings_transaction", true)
+        .like("description", `%${oldGoal.name}%`);
+    }
+
+    revalidatePath("/dashboard/features/budget-finance");
+  } catch (error) {
+    console.error("Failed to edit savings goal:", error);
+    throw error;
+  }
+}
