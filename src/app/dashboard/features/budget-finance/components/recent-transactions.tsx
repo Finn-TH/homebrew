@@ -22,6 +22,36 @@ interface RecentTransactionsProps {
   categories: Category[];
 }
 
+const getTransactionDisplay = (transaction: Transaction) => {
+  // Special handling for savings transactions
+  if (transaction.is_savings_transaction) {
+    return {
+      title: "Savings",
+      subtitle: transaction.description,
+      icon:
+        transaction.type === "income" ? (
+          <ArrowUpCircle className="h-5 w-5 text-green-500" />
+        ) : (
+          <ArrowDownCircle className="h-5 w-5 text-red-500" />
+        ),
+      iconBg: transaction.type === "income" ? "bg-green-100" : "bg-red-100",
+    };
+  }
+
+  // Default display for other transactions
+  return {
+    title: transaction.category?.name || "Uncategorized",
+    subtitle: transaction.description,
+    icon:
+      transaction.type === "income" ? (
+        <ArrowUpCircle className="h-5 w-5 text-green-500" />
+      ) : (
+        <ArrowDownCircle className="h-5 w-5 text-red-500" />
+      ),
+    iconBg: transaction.type === "income" ? "bg-green-100" : "bg-red-100",
+  };
+};
+
 export default function RecentTransactions({
   transactions,
   categories,
@@ -36,26 +66,10 @@ export default function RecentTransactions({
     useState<Transaction | null>(null);
 
   const currentDate = new Date();
-  const sortedTransactions = filterTransactionsByMonth(
+  const currentMonthTransactions = filterTransactionsByMonth(
     transactions,
     currentDate
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const initialTransactions = sortedTransactions.slice(0, 4);
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const displayTransactions = isExpanded
-    ? sortedTransactions
-    : initialTransactions;
-  const remainingCount = sortedTransactions.length - 4;
-
-  const filteredTransactions = displayTransactions.filter((transaction) => {
-    if (selectedType !== "all" && transaction.type !== selectedType)
-      return false;
-    if (selectedCategory && transaction.category_id !== selectedCategory)
-      return false;
-    return true;
-  });
 
   return (
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
@@ -117,113 +131,88 @@ export default function RecentTransactions({
         </div>
       </div>
 
-      <div
-        className={`space-y-4 ${
-          isExpanded ? "max-h-[400px] overflow-y-auto pr-2" : ""
-        }`}
-      >
-        {filteredTransactions.map((transaction) => (
-          <div
-            key={transaction.id}
-            className="flex items-center justify-between py-4 px-6 rounded-lg hover:bg-[#8B4513]/[0.03] transition-colors"
-          >
-            <div className="flex items-center gap-4">
-              <div
-                className={`p-2 rounded-full ${
-                  transaction.type === "expense" ? "bg-red-100" : "bg-green-100"
-                }`}
-              >
-                {transaction.type === "expense" ? (
-                  <ArrowDownCircle className="h-5 w-5 text-red-500" />
-                ) : (
-                  <ArrowUpCircle className="h-5 w-5 text-green-500" />
-                )}
-              </div>
-              <div>
-                <div className="font-medium text-[#8B4513]">
-                  {transaction.category.name}
-                </div>
-                <div className="text-sm text-[#8B4513]/60">
-                  {transaction.description}
-                </div>
-              </div>
-            </div>
+      <div className="space-y-4">
+        {currentMonthTransactions.map((transaction) => {
+          const display = getTransactionDisplay(transaction);
 
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div
-                  className={`font-medium tabular-nums ${
-                    transaction.type === "expense"
-                      ? "text-red-500"
-                      : "text-green-500"
-                  }`}
-                >
-                  {formatMoney(transaction.amount, { showSign: true })}
+          return (
+            <div
+              key={transaction.id}
+              className="flex items-center justify-between py-4 px-6 rounded-lg hover:bg-[#8B4513]/[0.03] transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2 rounded-full ${display.iconBg}`}>
+                  {display.icon}
                 </div>
-                <div className="text-sm text-[#8B4513]/60">
-                  {format(new Date(transaction.date), "MMM d, yyyy")}
+                <div>
+                  <div className="font-medium text-[#8B4513]">
+                    {display.title}
+                  </div>
+                  <div className="text-sm text-[#8B4513]/60">
+                    {display.subtitle}
+                  </div>
                 </div>
               </div>
 
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button className="p-2 hover:bg-[#8B4513]/5 rounded-lg transition-colors">
-                    <MoreVertical className="h-4 w-4 text-[#8B4513]/70" />
-                  </button>
-                </DropdownMenu.Trigger>
-
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    className="w-48 bg-white rounded-lg shadow-lg border border-[#8B4513]/10 py-1"
-                    align="end"
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div
+                    className={`font-medium tabular-nums ${
+                      transaction.type === "expense"
+                        ? "text-red-500"
+                        : "text-green-500"
+                    }`}
                   >
-                    <DropdownMenu.Item
-                      className="px-4 py-2 text-sm text-[#8B4513] hover:bg-[#8B4513]/5 cursor-pointer"
-                      onSelect={() => {
-                        // TODO: Implement edit
-                      }}
-                    >
-                      Edit Transaction
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
-                      onSelect={() => {
-                        setTransactionToDelete(transaction);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                    >
-                      Delete Transaction
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-            </div>
-          </div>
-        ))}
+                    {formatMoney(transaction.amount, { showSign: true })}
+                  </div>
+                  <div className="text-sm text-[#8B4513]/60">
+                    {format(new Date(transaction.date), "MMM d, yyyy")}
+                  </div>
+                </div>
 
-        {displayTransactions.length === 0 && (
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button className="p-2 hover:bg-[#8B4513]/5 rounded-lg transition-colors">
+                      <MoreVertical className="h-4 w-4 text-[#8B4513]/70" />
+                    </button>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="w-48 bg-white rounded-lg shadow-lg border border-[#8B4513]/10 py-1"
+                      align="end"
+                    >
+                      <DropdownMenu.Item
+                        className="px-4 py-2 text-sm text-[#8B4513] hover:bg-[#8B4513]/5 cursor-pointer"
+                        onSelect={() => {
+                          // TODO: Implement edit
+                        }}
+                      >
+                        Edit Transaction
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                        onSelect={() => {
+                          setTransactionToDelete(transaction);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        Delete Transaction
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+            </div>
+          );
+        })}
+
+        {currentMonthTransactions.length === 0 && (
           <div className="text-center py-8 text-[#8B4513]/70">
             No transactions for {format(currentDate, "MMMM yyyy")}
           </div>
         )}
       </div>
-
-      {remainingCount > 0 && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mt-4 py-2 px-4 text-sm text-[#8B4513]/70 hover:bg-[#8B4513]/5 rounded-lg flex items-center justify-center gap-2 transition-colors"
-        >
-          {isExpanded ? (
-            <>
-              Show Less <ChevronDown className="w-4 h-4 rotate-180" />
-            </>
-          ) : (
-            <>
-              Show More ({remainingCount}) <ChevronDown className="w-4 h-4" />
-            </>
-          )}
-        </button>
-      )}
 
       <Dialog.Root
         open={isDeleteDialogOpen}

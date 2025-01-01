@@ -41,25 +41,20 @@ export async function addTransaction(formData: FormData): Promise<void> {
 
 export async function addSavingsGoal(formData: FormData): Promise<void> {
   try {
-    const name = formData.get("name") as string;
-    const target_amount = parseFloat(formData.get("target_amount") as string);
-    const target_date = formData.get("target_date") as string;
-    const color = formData.get("color") as string;
-
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) throw new Error("User not authenticated");
+    if (!user) throw new Error("Not authenticated");
 
     const { error } = await supabase.from("budget_savings_goals").insert({
       user_id: user.id,
-      name,
-      target_amount,
-      current_amount: 0,
-      target_date,
-      color,
+      name: formData.get("name"),
+      target_amount: parseFloat(formData.get("target_amount") as string),
+      current_amount: parseFloat(formData.get("current_amount") as string) || 0,
+      target_date: (formData.get("target_date") as string) || null,
+      color: (formData.get("color") as string) || "bg-[#A0522D]", // Default to our theme color
     });
 
     if (error) throw error;
@@ -68,6 +63,30 @@ export async function addSavingsGoal(formData: FormData): Promise<void> {
     console.error("Failed to add savings goal:", error);
     throw error;
   }
+}
+
+export async function updateSavingsGoalAmount(
+  goalId: string,
+  amount: number,
+  isContribution: boolean = true
+): Promise<void> {
+  const supabase = await createClient();
+
+  // Start a transaction to update both savings and budget
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error } = await supabase.rpc("update_savings_and_budget", {
+    p_goal_id: goalId,
+    p_amount: amount,
+    p_is_contribution: isContribution,
+    p_user_id: user.id,
+  });
+
+  if (error) throw error;
+  revalidatePath("/dashboard/features/budget-finance");
 }
 
 export async function updateMonthlyBudget(formData: FormData): Promise<void> {
@@ -120,6 +139,59 @@ export async function deleteTransaction(id: string): Promise<void> {
     revalidatePath("/dashboard/features/budget-finance");
   } catch (error) {
     console.error("Failed to delete transaction:", error);
+    throw error;
+  }
+}
+
+export async function updateSavingsGoal(
+  goalId: string,
+  amount: number,
+  isWithdrawal: boolean
+): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("User not authenticated");
+
+    // Get the goal details
+    const { data: goal } = await supabase
+      .from("budget_savings_goals")
+      .select("name, current_amount")
+      .eq("id", goalId)
+      .single();
+
+    if (!goal) throw new Error("Goal not found");
+
+    const newAmount = isWithdrawal
+      ? Math.max(goal.current_amount - amount, 0)
+      : goal.current_amount + amount;
+
+    await supabase
+      .from("budget_savings_goals")
+      .update({
+        current_amount: newAmount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", goalId);
+
+    // Create transaction record with savings flag
+    await supabase.from("budget_transactions").insert({
+      user_id: user.id,
+      amount: amount,
+      type: isWithdrawal ? "income" : "expense",
+      description: `${isWithdrawal ? "Withdrawal from" : "Contribution to"} ${
+        goal.name
+      }`,
+      date: new Date().toISOString(),
+      is_savings_transaction: true,
+    });
+
+    revalidatePath("/dashboard/features/budget-finance");
+  } catch (error) {
+    console.error("Failed to update savings goal:", error);
     throw error;
   }
 }

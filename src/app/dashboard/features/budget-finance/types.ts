@@ -3,16 +3,15 @@ export type TransactionType = "income" | "expense";
 export interface Transaction {
   id: string;
   user_id: string;
-  category_id: string;
+  category_id: string | null;
   type: TransactionType;
   amount: number;
   description: string;
   date: string;
-  is_recurring: boolean;
-  recurring_frequency?: string;
+  is_savings_transaction: boolean;
   created_at: string;
   updated_at: string;
-  category: {
+  category?: {
     name: string;
     color: string;
   };
