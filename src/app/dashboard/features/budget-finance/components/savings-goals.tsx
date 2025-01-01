@@ -16,9 +16,17 @@ import UpdateSavingsGoalDialog from "./update-savings-goal-dialog";
 
 interface SavingsGoalsProps {
   goals: SavingsGoal[];
+  monthlyBudget: number;
+  monthlyExpenses: number;
+  monthlyIncome: number;
 }
 
-export default function SavingsGoals({ goals }: SavingsGoalsProps) {
+export default function SavingsGoals({
+  goals,
+  monthlyBudget,
+  monthlyExpenses,
+  monthlyIncome,
+}: SavingsGoalsProps) {
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | null>(null);
 
@@ -131,6 +139,9 @@ export default function SavingsGoals({ goals }: SavingsGoalsProps) {
         isOpen={isContributeOpen}
         onOpenChange={setIsContributeOpen}
         selectedGoal={selectedGoal}
+        monthlyBudget={monthlyBudget}
+        monthlyExpenses={monthlyExpenses}
+        monthlyIncome={monthlyIncome}
       />
     </div>
   );

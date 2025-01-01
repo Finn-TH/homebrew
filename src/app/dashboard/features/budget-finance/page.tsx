@@ -1,5 +1,9 @@
 import { createClient } from "@/utils/supabase/server";
 import BudgetClient from "./components/budget-client";
+import {
+  calculateMonthlyTotals,
+  filterTransactionsByMonth,
+} from "./utils/calculations";
 
 export default async function BudgetFinancePage() {
   const supabase = await createClient();
@@ -39,12 +43,23 @@ export default async function BudgetFinancePage() {
 
   const monthlyBudget = settings?.monthly_budget || 3000;
 
+  // Calculate monthly totals
+  const currentDate = new Date();
+  const monthlyTransactions = filterTransactionsByMonth(
+    transactions || [],
+    currentDate
+  );
+  const { income: monthlyIncome, expenses: monthlyExpenses } =
+    calculateMonthlyTotals(monthlyTransactions);
+
   return (
     <BudgetClient
       transactions={transactions || []}
       categories={categories || []}
       savingsGoals={savingsGoals || []}
       monthlyBudget={monthlyBudget}
+      monthlyExpenses={monthlyExpenses}
+      monthlyIncome={monthlyIncome}
     />
   );
 }

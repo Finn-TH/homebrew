@@ -109,3 +109,21 @@ export const calculateTimeRemaining = (goal: SavingsGoal) => {
   );
   return months <= 0 ? "Past due" : `${months} months left`;
 };
+
+export const calculateAvailableToContribute = (
+  monthlyBudget: number,
+  monthlyExpenses: number,
+  monthlyIncome: number
+) => {
+  // Calculate total budget (monthly budget + income)
+  const totalBudget = monthlyBudget + monthlyIncome;
+
+  // Calculate how much is left after expenses
+  const availableAmount = Math.max(totalBudget - monthlyExpenses, 0);
+
+  return {
+    availableAmount,
+    hasAvailableFunds: availableAmount > 0,
+    percentage: Math.min((availableAmount / totalBudget) * 100, 100),
+  };
+};

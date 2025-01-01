@@ -15,6 +15,8 @@ interface BudgetClientProps {
   categories: Category[];
   savingsGoals: SavingsGoal[];
   monthlyBudget: number;
+  monthlyExpenses: number;
+  monthlyIncome: number;
 }
 
 export default function BudgetClient({
@@ -22,6 +24,8 @@ export default function BudgetClient({
   categories,
   savingsGoals,
   monthlyBudget,
+  monthlyExpenses,
+  monthlyIncome,
 }: BudgetClientProps) {
   const [currentView, setCurrentView] = useState<"dashboard" | "analytics">(
     "dashboard"
@@ -76,7 +80,12 @@ export default function BudgetClient({
           </div>
           <div className="col-span-4 space-y-8">
             <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-              <SavingsGoals goals={savingsGoals} />
+              <SavingsGoals
+                goals={savingsGoals}
+                monthlyBudget={monthlyBudget}
+                monthlyExpenses={monthlyExpenses}
+                monthlyIncome={monthlyIncome}
+              />
             </div>
             <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
               <ExpenseCategories
