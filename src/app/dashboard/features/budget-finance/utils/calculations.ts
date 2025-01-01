@@ -37,9 +37,12 @@ export const calculateBudgetUsage = (
 ) => {
   const totalBudget = monthlyBudget + totalIncome;
   const usagePercentage = Math.min((expenses / totalBudget) * 100, 100);
+  const availableBudget = Math.max(totalBudget - expenses, 0);
+
   return {
     totalBudget,
     usagePercentage,
+    availableBudget,
   };
 };
 
@@ -84,4 +87,25 @@ export const calculateGoalProgress = (
     percentage,
     isComplete,
   };
+};
+
+// Goal time calculations
+export const calculateMonthlyNeeded = (goal: SavingsGoal) => {
+  if (!goal.target_date) return 0;
+  const remaining = goal.target_amount - goal.current_amount;
+  const monthsLeft = Math.max(
+    1,
+    (new Date(goal.target_date).getTime() - new Date().getTime()) /
+      (1000 * 60 * 60 * 24 * 30)
+  );
+  return remaining / monthsLeft;
+};
+
+export const calculateTimeRemaining = (goal: SavingsGoal) => {
+  if (!goal.target_date) return "No target date";
+  const months = Math.ceil(
+    (new Date(goal.target_date).getTime() - new Date().getTime()) /
+      (1000 * 60 * 60 * 24 * 30)
+  );
+  return months <= 0 ? "Past due" : `${months} months left`;
 };

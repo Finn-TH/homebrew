@@ -6,6 +6,7 @@ import {
   ArrowDownCircle,
   MoreVertical,
   ChevronDown,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Transaction, Category } from "../types";
@@ -14,6 +15,7 @@ import { deleteTransaction } from "../actions";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "../utils/money";
 import { filterTransactionsByMonth } from "../utils/calculations";
+import * as Dialog from "@radix-ui/react-dialog";
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -29,6 +31,9 @@ export default function RecentTransactions({
     "all" | "income" | "expense"
   >("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] =
+    useState<Transaction | null>(null);
 
   const currentDate = new Date();
   const sortedTransactions = filterTransactionsByMonth(
@@ -182,14 +187,9 @@ export default function RecentTransactions({
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
                       className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
-                      onSelect={async () => {
-                        if (
-                          confirm(
-                            "Are you sure you want to delete this transaction?"
-                          )
-                        ) {
-                          await deleteTransaction(transaction.id);
-                        }
+                      onSelect={() => {
+                        setTransactionToDelete(transaction);
+                        setIsDeleteDialogOpen(true);
                       }}
                     >
                       Delete Transaction
@@ -224,6 +224,46 @@ export default function RecentTransactions({
           )}
         </button>
       )}
+
+      <Dialog.Root
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] bg-white rounded-xl p-6 shadow-xl">
+            <div className="flex items-center gap-4 text-red-600 mb-4">
+              <AlertCircle className="h-6 w-6" />
+              <Dialog.Title className="text-lg font-semibold">
+                Delete Transaction
+              </Dialog.Title>
+            </div>
+
+            <Dialog.Description className="text-[#8B4513]/70 mb-6">
+              Are you sure you want to delete this transaction? This action
+              cannot be undone.
+            </Dialog.Description>
+
+            <div className="flex justify-end gap-3">
+              <Dialog.Close className="px-4 py-2 text-sm text-[#8B4513] hover:bg-[#8B4513]/5 rounded-lg transition-colors">
+                Cancel
+              </Dialog.Close>
+              <button
+                onClick={async () => {
+                  if (transactionToDelete) {
+                    await deleteTransaction(transactionToDelete.id);
+                    setIsDeleteDialogOpen(false);
+                    setTransactionToDelete(null);
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

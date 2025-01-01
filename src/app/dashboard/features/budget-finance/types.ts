@@ -35,7 +35,8 @@ export interface SavingsGoal {
   name: string;
   target_amount: number;
   current_amount: number;
-  target_date: string;
+  target_date?: string;
+  description?: string;
   color: string;
   created_at: string;
   updated_at: string;

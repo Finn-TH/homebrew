@@ -62,8 +62,7 @@ export default function ExpenseCategories({
                     isOverLimit ? "text-red-600" : "text-[#8B4513]/60"
                   }`}
                 >
-                  {formatMoney(spent, { showSign: true })} /{" "}
-                  {formatMoney(category.monthly_limit, { showSign: true })}
+                  {formatMoney(spent)} / {formatMoney(category.monthly_limit)}
                 </span>
               </div>
               <div className="h-1 bg-[#8B4513]/20 rounded-full overflow-hidden">
