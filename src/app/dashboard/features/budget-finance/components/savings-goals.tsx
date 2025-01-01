@@ -13,6 +13,7 @@ import {
   calculateTimeRemaining,
 } from "../utils/calculations";
 import UpdateSavingsGoalDialog from "./update-savings-goal-dialog";
+import AddSavingsGoalDialog from "./add-savings-goal-dialog";
 
 interface SavingsGoalsProps {
   goals: SavingsGoal[];
@@ -32,11 +33,11 @@ export default function SavingsGoals({
 
   return (
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
-      <h2 className="text-xl font-semibold text-[#8B4513] mb-8">
-        Savings Goals
-      </h2>
-
-      <div className="space-y-8">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-xl font-semibold text-[#8B4513]">Savings Goals</h2>
+        <AddSavingsGoalDialog />
+      </div>
+      <div className="space-y-4">
         {goals.map((goal) => {
           const { percentage, isComplete } = calculateGoalProgress(
             goal.current_amount,

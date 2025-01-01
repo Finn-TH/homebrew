@@ -236,3 +236,37 @@ export async function updateSavingsGoal(
     throw error;
   }
 }
+
+interface CreateSavingsGoalParams {
+  name: string;
+  target_amount: number;
+  target_date: string | null;
+}
+
+export async function createSavingsGoal(
+  params: CreateSavingsGoalParams
+): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("Not authenticated");
+
+    const { error } = await supabase.from("budget_savings_goals").insert({
+      user_id: user.id,
+      name: params.name,
+      target_amount: params.target_amount,
+      target_date: params.target_date,
+      current_amount: 0,
+      color: "#8B4513", // Default color matching our theme
+    });
+
+    if (error) throw error;
+    revalidatePath("/dashboard/features/budget-finance");
+  } catch (error) {
+    console.error("Failed to create savings goal:", error);
+    throw error;
+  }
+}
