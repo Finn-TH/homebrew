@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpCircle, ArrowDownCircle, MoreVertical } from "lucide-react";
+import {
+  ArrowUpCircle,
+  ArrowDownCircle,
+  MoreVertical,
+  ChevronDown,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Transaction, Category } from "../types";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { deleteTransaction } from "../actions";
 import { useRouter } from "next/navigation";
+import { formatMoney } from "../utils/money";
+import { filterTransactionsByMonth } from "../utils/calculations";
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -15,7 +22,7 @@ interface RecentTransactionsProps {
 
 export default function RecentTransactions({
   transactions,
-  categories = [],
+  categories,
 }: RecentTransactionsProps) {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState<
@@ -23,7 +30,21 @@ export default function RecentTransactions({
   >("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  const filteredTransactions = transactions.filter((transaction) => {
+  const currentDate = new Date();
+  const sortedTransactions = filterTransactionsByMonth(
+    transactions,
+    currentDate
+  ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const initialTransactions = sortedTransactions.slice(0, 4);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const displayTransactions = isExpanded
+    ? sortedTransactions
+    : initialTransactions;
+  const remainingCount = sortedTransactions.length - 4;
+
+  const filteredTransactions = displayTransactions.filter((transaction) => {
     if (selectedType !== "all" && transaction.type !== selectedType)
       return false;
     if (selectedCategory && transaction.category_id !== selectedCategory)
@@ -35,7 +56,10 @@ export default function RecentTransactions({
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-[#8B4513]">
-          Recent Transactions
+          Transactions
+          <span className="text-sm font-normal text-[#8B4513]/70 ml-2">
+            ({format(currentDate, "MMMM yyyy")})
+          </span>
         </h2>
 
         {/* Filters */}
@@ -88,7 +112,11 @@ export default function RecentTransactions({
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div
+        className={`space-y-4 ${
+          isExpanded ? "max-h-[400px] overflow-y-auto pr-2" : ""
+        }`}
+      >
         {filteredTransactions.map((transaction) => (
           <div
             key={transaction.id}
@@ -125,8 +153,7 @@ export default function RecentTransactions({
                       : "text-green-500"
                   }`}
                 >
-                  {transaction.type === "expense" ? "-" : "+"}$
-                  {Number(transaction.amount).toFixed(2)}
+                  {formatMoney(transaction.amount, { showSign: true })}
                 </div>
                 <div className="text-sm text-[#8B4513]/60">
                   {format(new Date(transaction.date), "MMM d, yyyy")}
@@ -174,12 +201,29 @@ export default function RecentTransactions({
           </div>
         ))}
 
-        {filteredTransactions.length === 0 && (
-          <div className="text-center py-12 text-[#8B4513]/60">
-            No transactions found
+        {displayTransactions.length === 0 && (
+          <div className="text-center py-8 text-[#8B4513]/70">
+            No transactions for {format(currentDate, "MMMM yyyy")}
           </div>
         )}
       </div>
+
+      {remainingCount > 0 && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full mt-4 py-2 px-4 text-sm text-[#8B4513]/70 hover:bg-[#8B4513]/5 rounded-lg flex items-center justify-center gap-2 transition-colors"
+        >
+          {isExpanded ? (
+            <>
+              Show Less <ChevronDown className="w-4 h-4 rotate-180" />
+            </>
+          ) : (
+            <>
+              Show More ({remainingCount}) <ChevronDown className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }

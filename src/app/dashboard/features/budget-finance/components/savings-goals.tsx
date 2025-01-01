@@ -5,6 +5,8 @@ import { PlusCircle } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
 import { SavingsGoal } from "../types";
+import { formatMoney } from "../utils/money";
+import { calculateGoalProgress } from "../utils/calculations";
 
 interface SavingsGoalsProps {
   goals: SavingsGoal[];
@@ -22,8 +24,10 @@ export default function SavingsGoals({ goals }: SavingsGoalsProps) {
 
       <div className="space-y-8">
         {goals.map((goal) => {
-          const percentage = (goal.current_amount / goal.target_amount) * 100;
-          const isComplete = percentage >= 100;
+          const { percentage, isComplete } = calculateGoalProgress(
+            goal.current_amount,
+            goal.target_amount
+          );
 
           return (
             <div key={goal.id} className="space-y-2">
@@ -48,8 +52,12 @@ export default function SavingsGoals({ goals }: SavingsGoalsProps) {
                 />
               </div>
               <div className="flex justify-between text-[#8B4513]/60">
-                <span>${goal.current_amount.toFixed(2)}</span>
-                <span>${goal.target_amount.toFixed(2)}</span>
+                <span>
+                  {formatMoney(goal.current_amount, { showSign: true })}
+                </span>
+                <span>
+                  {formatMoney(goal.target_amount, { showSign: true })}
+                </span>
               </div>
             </div>
           );

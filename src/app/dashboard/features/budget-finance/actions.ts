@@ -3,10 +3,11 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { Category, Transaction, SavingsGoal } from "./types";
+import { getTransactionAmount } from "./utils/money";
 
 export async function addTransaction(formData: FormData): Promise<void> {
   try {
-    const amount = parseFloat(formData.get("amount") as string);
+    const rawAmount = parseFloat(formData.get("amount") as string);
     const category_id = formData.get("category_id") as string;
     const description = formData.get("description") as string;
     const type = formData.get("type") as "income" | "expense";
@@ -18,6 +19,8 @@ export async function addTransaction(formData: FormData): Promise<void> {
     } = await supabase.auth.getUser();
 
     if (!user) throw new Error("User not authenticated");
+
+    const amount = getTransactionAmount(rawAmount, type);
 
     const { error } = await supabase.from("budget_transactions").insert({
       user_id: user.id,

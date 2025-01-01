@@ -4,6 +4,11 @@ import { Category, Transaction } from "../types";
 import { motion } from "framer-motion";
 import { ShoppingBag, Home, Car, Film, Package } from "lucide-react";
 import { JSX } from "react";
+import { formatMoney } from "../utils/money";
+import {
+  calculateCategorySpending,
+  calculateCategoryProgress,
+} from "../utils/calculations";
 
 interface ExpenseCategoriesProps {
   categories: Category[];
@@ -23,6 +28,7 @@ export default function ExpenseCategories({
   transactions,
 }: ExpenseCategoriesProps) {
   const expenseCategories = categories.filter((cat) => cat.type === "expense");
+  const currentDate = new Date();
 
   return (
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
@@ -32,17 +38,15 @@ export default function ExpenseCategories({
 
       <div className="space-y-6">
         {expenseCategories.map((category) => {
-          const categoryTransactions = transactions.filter(
-            (t) => t.category_id === category.id && t.type === "expense"
+          const spent = calculateCategorySpending(
+            transactions,
+            category.id,
+            currentDate
           );
-
-          const spent = categoryTransactions.reduce(
-            (sum, t) => sum + Number(t.amount),
-            0
+          const { percentage, isOverLimit } = calculateCategoryProgress(
+            spent,
+            category.monthly_limit
           );
-
-          const percentage = (spent / category.monthly_limit) * 100;
-          const isOverLimit = percentage > 100;
 
           return (
             <div key={category.id} className="space-y-2">
@@ -58,7 +62,8 @@ export default function ExpenseCategories({
                     isOverLimit ? "text-red-600" : "text-[#8B4513]/60"
                   }`}
                 >
-                  ${spent.toFixed(2)} / ${category.monthly_limit.toFixed(2)}
+                  {formatMoney(spent, { showSign: true })} /{" "}
+                  {formatMoney(category.monthly_limit, { showSign: true })}
                 </span>
               </div>
               <div className="h-1 bg-[#8B4513]/20 rounded-full overflow-hidden">
