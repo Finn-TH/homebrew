@@ -183,14 +183,6 @@ export default function RecentTransactions({
                       align="end"
                     >
                       <DropdownMenu.Item
-                        className="px-4 py-2 text-sm text-[#8B4513] hover:bg-[#8B4513]/5 cursor-pointer"
-                        onSelect={() => {
-                          // TODO: Implement edit
-                        }}
-                      >
-                        Edit Transaction
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
                         className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
                         onSelect={() => {
                           setTransactionToDelete(transaction);
