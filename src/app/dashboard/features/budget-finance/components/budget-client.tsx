@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Category, Transaction, SavingsGoal } from "../types";
+import { BarChart3, LayoutDashboard } from "lucide-react";
 import BudgetOverview from "./budget-overview";
 import RecentTransactions from "./recent-transactions";
 import ExpenseCategories from "./expense-categories";
 import SavingsGoals from "./savings-goals";
 import QuickExpense from "./quick-expense";
-import { BarChart3, LayoutDashboard } from "lucide-react";
-import BudgetAnalytics from "./budget-analytics";
+import AnalyticsWrapper from "../server/analytics-wrapper";
+import { Category, Transaction, SavingsGoal } from "../types";
 
 interface BudgetClientProps {
   transactions: Transaction[];
@@ -96,7 +96,7 @@ export default function BudgetClient({
           </div>
         </div>
       ) : (
-        <BudgetAnalytics
+        <AnalyticsWrapper
           transactions={transactions}
           monthlyBudget={monthlyBudget}
           goals={savingsGoals}

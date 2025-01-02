@@ -72,7 +72,6 @@ export async function updateSavingsGoalAmount(
 ): Promise<void> {
   const supabase = await createClient();
 
-  // Start a transaction to update both savings and budget
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -241,6 +240,7 @@ interface CreateSavingsGoalParams {
   name: string;
   target_amount: number;
   target_date: string | null;
+  color: string;
 }
 
 export async function createSavingsGoal(
@@ -260,7 +260,7 @@ export async function createSavingsGoal(
       target_amount: params.target_amount,
       target_date: params.target_date,
       current_amount: 0,
-      color: "#8B4513", // Default color matching our theme
+      color: params.color || "#8B4513", // Make sure color is included
     });
 
     if (error) throw error;
@@ -317,6 +317,7 @@ interface EditSavingsGoalParams {
   name: string;
   target_amount: number;
   target_date: string | null;
+  color: string;
 }
 
 export async function editSavingsGoal(
@@ -330,40 +331,18 @@ export async function editSavingsGoal(
 
     if (!user) throw new Error("Not authenticated");
 
-    // Get the old goal name first
-    const { data: oldGoal } = await supabase
-      .from("budget_savings_goals")
-      .select("name")
-      .eq("id", params.id)
-      .single();
-
-    if (!oldGoal) throw new Error("Goal not found");
-
-    // Update the goal
-    await supabase
+    const { error } = await supabase
       .from("budget_savings_goals")
       .update({
         name: params.name,
         target_amount: params.target_amount,
         target_date: params.target_date,
-        updated_at: new Date().toISOString(),
+        color: params.color || "#8B4513",
       })
       .eq("id", params.id)
       .eq("user_id", user.id);
 
-    // Update related transactions if name changed
-    if (oldGoal.name !== params.name) {
-      await supabase
-        .from("budget_transactions")
-        .update({
-          description: (description: string) =>
-            description.replace(oldGoal.name, params.name),
-        })
-        .eq("user_id", user.id)
-        .eq("is_savings_transaction", true)
-        .like("description", `%${oldGoal.name}%`);
-    }
-
+    if (error) throw error;
     revalidatePath("/dashboard/features/budget-finance");
   } catch (error) {
     console.error("Failed to edit savings goal:", error);

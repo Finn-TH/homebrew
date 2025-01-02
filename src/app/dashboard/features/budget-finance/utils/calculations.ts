@@ -1,4 +1,5 @@
 import { Transaction, Category, SavingsGoal } from "../types";
+import { format, subMonths } from "date-fns";
 
 // Monthly calculations
 export const filterTransactionsByMonth = (
@@ -136,4 +137,38 @@ export function calculateCategoryTotals(transactions: Transaction[]) {
     }
     return acc;
   }, {} as Record<string, number>);
+}
+
+interface AnalyticsData {
+  currentDate: Date;
+  categoryTotals: Record<string, number>;
+  trendData: Array<{
+    month: string;
+    income: number;
+    expenses: number;
+  }>;
+}
+
+export function prepareAnalyticsData(
+  transactions: Transaction[]
+): AnalyticsData {
+  const currentDate = new Date();
+  const currentMonthTransactions = filterTransactionsByMonth(
+    transactions,
+    currentDate
+  );
+  const categoryTotals = calculateCategoryTotals(currentMonthTransactions);
+
+  const trendData = Array.from({ length: 6 }, (_, i) => {
+    const date = subMonths(currentDate, 5 - i);
+    const monthTransactions = filterTransactionsByMonth(transactions, date);
+    const totals = calculateMonthlyTotals(monthTransactions);
+    return {
+      month: format(date, "MMM"),
+      income: totals.income,
+      expenses: totals.expenses,
+    };
+  });
+
+  return { currentDate, categoryTotals, trendData };
 }

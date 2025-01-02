@@ -29,16 +29,21 @@ export interface Category {
 }
 
 export interface SavingsGoal {
-  id: string;
-  user_id: string;
+  id: number;
   name: string;
+  description?: string;
   target_amount: number;
   current_amount: number;
-  target_date?: string;
-  description?: string;
+  target_date: string | null;
   color: string;
   created_at: string;
-  updated_at: string;
+}
+
+export interface SavingsGoalInput {
+  name: string;
+  target_amount: number;
+  target_date: string | null;
+  color: string;
 }
 
 export interface BudgetUserSettings {

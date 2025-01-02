@@ -12,6 +12,7 @@ export default function AddSavingsGoalDialog() {
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [targetDate, setTargetDate] = useState("");
+  const [color, setColor] = useState("#8B4513");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,11 +21,13 @@ export default function AddSavingsGoalDialog() {
         name,
         target_amount: Number(targetAmount),
         target_date: targetDate || null,
+        color,
       });
       setIsOpen(false);
       setName("");
       setTargetAmount("");
       setTargetDate("");
+      setColor("#8B4513");
       router.refresh();
     } catch (error) {
       console.error("Failed to create savings goal:", error);
@@ -34,9 +37,11 @@ export default function AddSavingsGoalDialog() {
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
-        <button className="flex items-center gap-2 px-4 py-2 text-[#8B4513]/60 hover:text-[#8B4513] hover:bg-[#8B4513]/5 rounded-lg transition-colors">
-          <Plus className="h-4 w-4" />
-          <span className="text-sm">Add Goal</span>
+        <button className="w-full text-left space-y-2 p-4 rounded-xl border-2 border-dashed border-[#8B4513]/20 hover:border-[#8B4513]/40 hover:bg-[#8B4513]/5 transition-colors group">
+          <div className="flex items-center gap-2 text-[#8B4513]/60 group-hover:text-[#8B4513]/80">
+            <Plus className="h-5 w-5" />
+            <span>Add New Goal</span>
+          </div>
         </button>
       </Dialog.Trigger>
 
@@ -102,6 +107,23 @@ export default function AddSavingsGoalDialog() {
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="color"
+                className="block text-sm text-[#8B4513]/60 mb-2"
+              >
+                Goal Color
+              </label>
+              <input
+                type="color"
+                id="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-full h-10 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
+                required
               />
             </div>
 

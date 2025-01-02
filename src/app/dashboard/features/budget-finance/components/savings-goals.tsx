@@ -1,9 +1,11 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { Info, AlertCircle, MoreVertical, X } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import * as HoverCard from "@radix-ui/react-hover-card";
+import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { format } from "date-fns";
 import { SavingsGoal } from "../types";
 import { formatMoney } from "../utils/money";
@@ -14,11 +16,8 @@ import {
 } from "../utils/calculations";
 import UpdateSavingsGoalDialog from "./update-savings-goal-dialog";
 import AddSavingsGoalDialog from "./add-savings-goal-dialog";
-import * as Dialog from "@radix-ui/react-dialog";
-import { AlertCircle, MoreVertical, X } from "lucide-react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { deleteSavingsGoal } from "../actions";
 import EditSavingsGoalDialog from "./edit-savings-goal-dialog";
+import { deleteSavingsGoal } from "../actions";
 
 interface SavingsGoalsProps {
   goals: SavingsGoal[];
@@ -35,10 +34,20 @@ export default function SavingsGoals({
 }: SavingsGoalsProps) {
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | null>(null);
-  const [goalToDelete, setGoalToDelete] = useState<SavingsGoal | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<SavingsGoal | null>(null);
   const [goalToEdit, setGoalToEdit] = useState<SavingsGoal | null>(null);
+
+  const handleDelete = async (goalId: number) => {
+    try {
+      await deleteSavingsGoal(goalId.toString());
+      setGoalToDelete(null);
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to delete goal:", error);
+    }
+  };
 
   return (
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
@@ -191,14 +200,27 @@ export default function SavingsGoals({
         })}
       </div>
 
-      <UpdateSavingsGoalDialog
-        isOpen={isContributeOpen}
-        onOpenChange={setIsContributeOpen}
-        selectedGoal={selectedGoal}
-        monthlyBudget={monthlyBudget}
-        monthlyExpenses={monthlyExpenses}
-        monthlyIncome={monthlyIncome}
-      />
+      {selectedGoal && (
+        <UpdateSavingsGoalDialog
+          isOpen={isContributeOpen}
+          onOpenChange={setIsContributeOpen}
+          selectedGoal={selectedGoal}
+          monthlyBudget={monthlyBudget}
+          monthlyExpenses={monthlyExpenses}
+          monthlyIncome={monthlyIncome}
+        />
+      )}
+
+      {goalToEdit && (
+        <EditSavingsGoalDialog
+          goal={goalToEdit}
+          isOpen={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) setGoalToEdit(null);
+          }}
+        />
+      )}
 
       <Dialog.Root
         open={isDeleteDialogOpen}
@@ -224,11 +246,9 @@ export default function SavingsGoals({
                 Cancel
               </Dialog.Close>
               <button
-                onClick={async () => {
+                onClick={() => {
                   if (goalToDelete) {
-                    await deleteSavingsGoal(goalToDelete.id);
-                    setIsDeleteDialogOpen(false);
-                    setGoalToDelete(null);
+                    handleDelete(goalToDelete.id);
                   }
                 }}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -239,15 +259,6 @@ export default function SavingsGoals({
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-
-      <EditSavingsGoalDialog
-        goal={goalToEdit}
-        isOpen={isEditDialogOpen}
-        onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) setGoalToEdit(null);
-        }}
-      />
     </div>
   );
 }

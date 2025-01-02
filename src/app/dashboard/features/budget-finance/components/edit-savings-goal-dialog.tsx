@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { SavingsGoal } from "../types";
 
 interface EditSavingsGoalDialogProps {
-  goal: SavingsGoal | null;
+  goal: SavingsGoal;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -24,12 +24,14 @@ export default function EditSavingsGoalDialog({
     goal?.target_amount?.toString() ?? "0"
   );
   const [targetDate, setTargetDate] = useState(goal?.target_date ?? "");
+  const [color, setColor] = useState(goal?.color ?? "#8B4513");
 
   useEffect(() => {
     if (goal) {
       setName(goal.name);
       setTargetAmount(goal.target_amount.toString());
       setTargetDate(goal.target_date || "");
+      setColor(goal.color);
     }
   }, [goal]);
 
@@ -39,10 +41,11 @@ export default function EditSavingsGoalDialog({
 
     try {
       await editSavingsGoal({
-        id: goal.id,
+        id: goal.id.toString(),
         name,
         target_amount: Number(targetAmount),
         target_date: targetDate || null,
+        color,
       });
       onOpenChange(false);
       router.refresh();
@@ -117,6 +120,23 @@ export default function EditSavingsGoalDialog({
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="color"
+                className="block text-sm text-[#8B4513]/60 mb-2"
+              >
+                Goal Color
+              </label>
+              <input
+                type="color"
+                id="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-full h-10 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
+                required
               />
             </div>
 

@@ -1,29 +1,7 @@
 "use client";
 
-import { SavingsGoal, Transaction } from "../types";
-import { format, subMonths, addMonths } from "date-fns";
-import {
-  ChevronLeft,
-  ChevronRight,
-  TrendingDown,
-  TrendingUp,
-  Info,
-  DollarSign,
-  Wallet,
-  PiggyBank,
-  BarChart3,
-  Target,
-  PieChart,
-} from "lucide-react";
 import { useState } from "react";
-import { formatMoney } from "../utils/money";
-import {
-  filterTransactionsByMonth,
-  calculateMonthlyTotals,
-  calculateSavings,
-  calculateCategoryTotals,
-  calculateGoalProgress,
-} from "../utils/calculations";
+import { format, addMonths, subMonths } from "date-fns";
 import { Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -35,6 +13,7 @@ import {
   Tooltip,
   Legend,
   ArcElement,
+  Filler,
 } from "chart.js";
 
 // Register ChartJS components
@@ -46,21 +25,53 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
+  Filler
 );
 
-interface BudgetAnalyticsProps {
+import {
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Wallet,
+  PiggyBank,
+  BarChart3,
+  PieChart,
+  Target,
+} from "lucide-react";
+import { Transaction, SavingsGoal } from "../types";
+import { formatMoney } from "../utils/money";
+import {
+  filterTransactionsByMonth,
+  calculateMonthlyTotals,
+  calculateSavings,
+  calculateGoalProgress,
+} from "../utils/calculations";
+
+interface AnalyticsClientProps {
+  currentDate: Date;
   transactions: Transaction[];
   monthlyBudget: number;
   goals: SavingsGoal[];
+  categoryTotals: Record<string, number>;
+  trendData: Array<{
+    month: string;
+    income: number;
+    expenses: number;
+  }>;
 }
 
-export default function BudgetAnalytics({
+export function AnalyticsClient({
+  currentDate: initialDate,
   transactions,
   monthlyBudget,
   goals,
-}: BudgetAnalyticsProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  categoryTotals,
+  trendData,
+}: AnalyticsClientProps) {
+  const [currentDate, setCurrentDate] = useState(initialDate);
 
   const currentMonthTransactions = filterTransactionsByMonth(
     transactions,
@@ -77,9 +88,8 @@ export default function BudgetAnalytics({
     currentTotals.income,
     currentTotals.expenses
   );
-  const categoryTotals = calculateCategoryTotals(currentMonthTransactions);
 
-  // Prepare data for charts
+  // Chart data preparation
   const categoryChartData = {
     labels: Object.keys(categoryTotals),
     datasets: [
@@ -98,23 +108,12 @@ export default function BudgetAnalytics({
     ],
   };
 
-  const last6Months = Array.from({ length: 6 }, (_, i) => {
-    const date = subMonths(currentDate, 5 - i);
-    const monthTransactions = filterTransactionsByMonth(transactions, date);
-    const totals = calculateMonthlyTotals(monthTransactions);
-    return {
-      month: format(date, "MMM"),
-      income: totals.income,
-      expenses: totals.expenses,
-    };
-  });
-
   const trendChartData = {
-    labels: last6Months.map((d) => d.month),
+    labels: trendData.map((d) => d.month),
     datasets: [
       {
         label: "Income",
-        data: last6Months.map((d) => d.income),
+        data: trendData.map((d) => d.income),
         borderColor: "#22C55E",
         backgroundColor: "#22C55E20",
         fill: true,
@@ -122,7 +121,7 @@ export default function BudgetAnalytics({
       },
       {
         label: "Expenses",
-        data: last6Months.map((d) => d.expenses),
+        data: trendData.map((d) => d.expenses),
         borderColor: "#EF4444",
         backgroundColor: "#EF444420",
         fill: true,
