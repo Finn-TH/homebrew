@@ -6,6 +6,7 @@ import { JournalEntry, Mood } from "./types";
 import { startOfWeek, endOfWeek } from "date-fns";
 
 export async function createJournalEntry(data: {
+  title: string | null;
   content: string;
   mood: Mood | null;
   gratitude: string | null;
@@ -13,9 +14,19 @@ export async function createJournalEntry(data: {
 }) {
   const supabase = await createClient();
 
-  const { data: entry, error: entryError } = await supabase
+  // Get the current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: entry, error } = await supabase
     .from("journal_entries")
     .insert({
+      user_id: user.id,
+      title: data.title,
       content: data.content,
       mood: data.mood,
       gratitude: data.gratitude,
@@ -24,7 +35,10 @@ export async function createJournalEntry(data: {
     .select()
     .single();
 
-  if (entryError) throw entryError;
+  if (error) {
+    console.error("Error creating journal entry:", error);
+    throw error;
+  }
 
   revalidatePath("/dashboard/mental-health");
   return entry;
@@ -71,4 +85,20 @@ export async function getCurrentWeekEntries() {
 
   if (error) throw error;
   return entries;
+}
+
+export async function deleteJournalEntry(entryId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("journal_entries")
+    .delete()
+    .eq("id", entryId);
+
+  if (error) {
+    console.error("Error deleting journal entry:", error);
+    throw error;
+  }
+
+  revalidatePath("/dashboard/mental-health");
 }

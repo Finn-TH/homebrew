@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { MOOD_EMOJIS, type Mood } from "../types";
 import RichTextEditor from "./rich-text-editor";
+import { createJournalEntry } from "../journal-actions";
+import { useRouter } from "next/navigation";
 
 interface NewEntryDialogProps {
   open: boolean;
@@ -23,11 +25,44 @@ export default function NewEntryDialog({
   open,
   onOpenChange,
 }: NewEntryDialogProps) {
+  const router = useRouter();
   const [mood, setMood] = useState<Mood | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [gratitude, setGratitude] = useState("");
   const [activities, setActivities] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!content) return; // Basic validation
+
+    try {
+      setIsSubmitting(true);
+      await createJournalEntry({
+        title: title || null,
+        content,
+        mood,
+        gratitude: gratitude || null,
+        activities,
+      });
+
+      // Reset form and close dialog
+      setMood(null);
+      setTitle("");
+      setContent("");
+      setGratitude("");
+      setActivities([]);
+      onOpenChange(false);
+
+      // Refresh the page data
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to create journal entry:", error);
+      // You might want to add error handling UI here
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -142,12 +177,17 @@ export default function NewEntryDialog({
             <div className="flex justify-end gap-3 pt-4">
               <button
                 onClick={() => onOpenChange(false)}
-                className="px-4 py-2 rounded-lg text-[#8B4513] hover:bg-[#8B4513]/5 transition-colors"
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-lg text-[#8B4513] hover:bg-[#8B4513]/5 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-lg bg-[#8B4513] text-white hover:bg-[#8B4513]/90 transition-colors">
-                Save Entry
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !content}
+                className="px-4 py-2 rounded-lg bg-[#8B4513] text-white hover:bg-[#8B4513]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Saving..." : "Save Entry"}
               </button>
             </div>
           </div>
