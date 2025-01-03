@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { Editor } from "@tiptap/react";
+import { useState } from "react";
+import { MOOD_EMOJIS, type Mood, type Activity } from "../types";
 import RichTextEditor from "./rich-text-editor";
 
 interface NewEntryDialogProps {
@@ -15,65 +15,96 @@ export default function NewEntryDialog({
   open,
   onOpenChange,
 }: NewEntryDialogProps) {
+  const [mood, setMood] = useState<Mood | null>(null);
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [gratitude, setGratitude] = useState<string[]>([""]);
-  const [activities, setActivities] = useState<string[]>([]);
+  const [gratitude, setGratitude] = useState("");
+  const [activities, setActivities] = useState<Activity[]>([]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[800px] translate-x-[-50%] translate-y-[-50%] rounded-xl bg-white p-6 shadow-lg focus:outline-none">
+        <Dialog.Overlay className="fixed inset-0 bg-black/40" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-8 shadow-xl">
           <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="text-xl font-semibold text-[#8B4513]">
+            <Dialog.Title className="text-2xl font-semibold text-[#8B4513]">
               New Journal Entry
             </Dialog.Title>
-            <Dialog.Close className="p-2 hover:bg-[#8B4513]/5 rounded-lg transition-colors">
-              <X className="w-5 h-5 text-[#8B4513]" />
+            <Dialog.Close className="rounded-lg p-2 hover:bg-[#8B4513]/5 transition-colors">
+              <X className="h-5 w-5 text-[#8B4513]/40" />
             </Dialog.Close>
           </div>
 
-          <div className="space-y-6 overflow-y-auto max-h-[calc(85vh-120px)]">
-            {/* Mood Tracker Component will be included here */}
+          <div className="space-y-6">
+            {/* Mood Selection */}
+            <div className="space-y-2">
+              <label className="text-lg font-medium text-[#8B4513]">
+                How are you feeling?
+              </label>
+              <div className="flex flex-wrap gap-4">
+                {(Object.keys(MOOD_EMOJIS) as Mood[]).map((moodOption) => (
+                  <button
+                    key={moodOption}
+                    onClick={() => setMood(moodOption)}
+                    className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-colors ${
+                      mood === moodOption
+                        ? "bg-[#8B4513]/10"
+                        : "hover:bg-[#8B4513]/5"
+                    }`}
+                  >
+                    <span className="text-2xl">{MOOD_EMOJIS[moodOption]}</span>
+                    <span className="text-sm text-[#8B4513]/70 capitalize">
+                      {moodOption}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Title Input */}
+            <div className="space-y-2">
+              <label className="text-lg font-medium text-[#8B4513]">
+                Title (Optional)
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Give your entry a title..."
+                className="w-full p-3 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20 text-[#8B4513]"
+              />
+            </div>
 
             {/* Journal Content */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#8B4513]/70">
+              <label className="text-lg font-medium text-[#8B4513]">
                 Journal Entry
               </label>
-              <RichTextEditor content={content} onChange={setContent} />
+              <div className="relative">
+                <RichTextEditor content={content} onChange={setContent} />
+                <div className="absolute right-2 bottom-2 text-sm text-[#8B4513]/40">
+                  {content.length}/500 words
+                </div>
+              </div>
             </div>
 
-            {/* Gratitude Section */}
+            {/* Gratitude Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#8B4513]/70">
-                Gratitude
+              <label className="text-lg font-medium text-[#8B4513]">
+                Gratitude (Optional)
               </label>
-              {gratitude.map((item, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  value={item}
-                  onChange={(e) => {
-                    const newGratitude = [...gratitude];
-                    newGratitude[index] = e.target.value;
-                    if (
-                      index === gratitude.length - 1 &&
-                      e.target.value.length > 0
-                    ) {
-                      newGratitude.push("");
-                    }
-                    setGratitude(newGratitude);
-                  }}
-                  placeholder="I am grateful for..."
-                  className="w-full p-2 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20"
-                />
-              ))}
+              <input
+                type="text"
+                value={gratitude}
+                onChange={(e) => setGratitude(e.target.value)}
+                placeholder="I am grateful for..."
+                className="w-full p-3 rounded-lg border border-[#8B4513]/10 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/20 text-[#8B4513]"
+              />
             </div>
 
             {/* Activities */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#8B4513]/70">
+              <label className="text-lg font-medium text-[#8B4513]">
                 Activities
               </label>
               <div className="flex flex-wrap gap-2">
@@ -83,13 +114,13 @@ export default function NewEntryDialog({
                       key={activity}
                       onClick={() => {
                         setActivities((prev) =>
-                          prev.includes(activity)
+                          prev.includes(activity as Activity)
                             ? prev.filter((a) => a !== activity)
-                            : [...prev, activity]
+                            : [...prev, activity as Activity]
                         );
                       }}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                        activities.includes(activity)
+                      className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                        activities.includes(activity as Activity)
                           ? "bg-[#8B4513] text-white"
                           : "bg-[#8B4513]/5 text-[#8B4513] hover:bg-[#8B4513]/10"
                       }`}
@@ -100,15 +131,19 @@ export default function NewEntryDialog({
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-3 mt-6">
-            <Dialog.Close className="px-4 py-2 text-[#8B4513] hover:bg-[#8B4513]/5 rounded-lg transition-colors">
-              Cancel
-            </Dialog.Close>
-            <button className="px-4 py-2 bg-[#8B4513] text-white rounded-lg hover:bg-[#8B4513]/90 transition-colors">
-              Save Entry
-            </button>
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => onOpenChange(false)}
+                className="px-4 py-2 rounded-lg text-[#8B4513] hover:bg-[#8B4513]/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button className="px-4 py-2 rounded-lg bg-[#8B4513] text-white hover:bg-[#8B4513]/90 transition-colors">
+                Save Entry
+              </button>
+            </div>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

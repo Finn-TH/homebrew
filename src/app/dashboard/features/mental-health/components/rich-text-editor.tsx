@@ -1,114 +1,103 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import Tiptap from "./tiptap";
-import { type Editor } from "@tiptap/react";
-import {
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Quote,
-  Undo,
-  Redo,
-} from "lucide-react";
+import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import CharacterCount from "@tiptap/extension-character-count";
+import BubbleMenuExtension from "@tiptap/extension-bubble-menu";
+import { Bold, Italic } from "lucide-react";
+import "../styles/journal.css";
 
 interface RichTextEditorProps {
   content: string;
   onChange: (content: string) => void;
 }
 
-const MenuButton = ({
-  isActive,
-  onClick,
-  children,
-}: {
-  isActive?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`p-2 rounded-lg transition-colors ${
-      isActive
-        ? "bg-[#8B4513] text-white"
-        : "text-[#8B4513] hover:bg-[#8B4513]/5"
-    }`}
-  >
-    {children}
-  </button>
-);
+const WORD_LIMIT = 500;
 
 export default function RichTextEditor({
   content,
   onChange,
 }: RichTextEditorProps) {
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: false,
+        orderedList: false,
+        blockquote: false,
+      }),
+      Placeholder.configure({
+        placeholder: "Share your thoughts for today...",
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: true,
+        includeChildren: false,
+        emptyEditorClass: "is-editor-empty",
+        emptyNodeClass: "is-empty",
+      }),
+      CharacterCount,
+      BubbleMenuExtension,
+    ],
+    content,
+    editorProps: {
+      attributes: {
+        class:
+          "tiptap prose journal-prose max-w-none focus:outline-none min-h-[200px] px-4 py-2",
+      },
+    },
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
 
-  const handleEditorReady = useCallback((editor: Editor) => {
-    setEditor(editor);
-  }, []);
+  if (!editor) {
+    return null;
+  }
+
+  const characters = editor?.storage?.characterCount?.characters?.() ?? 0;
+  const words = editor?.storage?.characterCount?.words?.() ?? 0;
+  const isOverLimit = words > WORD_LIMIT;
 
   return (
     <div className="border border-[#8B4513]/10 rounded-lg overflow-hidden bg-white">
-      <div className="flex items-center gap-1 p-2 border-b border-[#8B4513]/10">
-        <MenuButton
-          onClick={() => editor?.chain().focus().toggleBold().run()}
-          isActive={editor?.isActive("bold")}
+      {editor && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 150 }}
+          className="flex overflow-hidden bg-white rounded-lg shadow-lg border border-[#8B4513]/10"
+          shouldShow={({ editor, from, to }) => {
+            // Only show menu when text is selected
+            return from !== to;
+          }}
         >
-          <Bold className="w-4 h-4" />
-        </MenuButton>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-2 transition-colors hover:bg-[#8B4513]/5 ${
+              editor.isActive("bold") ? "text-[#8B4513]" : "text-[#8B4513]/60"
+            }`}
+          >
+            <Bold className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-2 transition-colors hover:bg-[#8B4513]/5 ${
+              editor.isActive("italic") ? "text-[#8B4513]" : "text-[#8B4513]/60"
+            }`}
+          >
+            <Italic className="w-4 h-4" />
+          </button>
+        </BubbleMenu>
+      )}
 
-        <MenuButton
-          onClick={() => editor?.chain().focus().toggleItalic().run()}
-          isActive={editor?.isActive("italic")}
-        >
-          <Italic className="w-4 h-4" />
-        </MenuButton>
-
-        <div className="w-px h-6 bg-[#8B4513]/10 mx-1" />
-
-        <MenuButton
-          onClick={() => editor?.chain().focus().toggleBulletList().run()}
-          isActive={editor?.isActive("bulletList")}
-        >
-          <List className="w-4 h-4" />
-        </MenuButton>
-
-        <MenuButton
-          onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-          isActive={editor?.isActive("orderedList")}
-        >
-          <ListOrdered className="w-4 h-4" />
-        </MenuButton>
-
-        <div className="w-px h-6 bg-[#8B4513]/10 mx-1" />
-
-        <MenuButton
-          onClick={() => editor?.chain().focus().toggleBlockquote().run()}
-          isActive={editor?.isActive("blockquote")}
-        >
-          <Quote className="w-4 h-4" />
-        </MenuButton>
-
-        <div className="w-px h-6 bg-[#8B4513]/10 mx-1" />
-
-        <MenuButton onClick={() => editor?.chain().focus().undo().run()}>
-          <Undo className="w-4 h-4" />
-        </MenuButton>
-
-        <MenuButton onClick={() => editor?.chain().focus().redo().run()}>
-          <Redo className="w-4 h-4" />
-        </MenuButton>
+      <div className="flex items-center justify-end gap-3 p-2 border-b border-[#8B4513]/10 text-sm text-[#8B4513]/60">
+        <span>{characters} characters</span>
+        <span className={isOverLimit ? "text-red-500" : ""}>
+          {words}/{WORD_LIMIT} words
+        </span>
       </div>
 
-      <Tiptap
-        content={content}
-        onChange={onChange}
-        placeholder="Write your thoughts here..."
-        onEditorReady={handleEditorReady}
-      />
+      <EditorContent editor={editor} />
     </div>
   );
 }

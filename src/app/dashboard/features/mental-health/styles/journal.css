@@ -1,17 +1,18 @@
-/* Journal-specific typography styles */
-.journal-prose {
-  @apply prose-headings:text-[#8B4513]
-      prose-p:text-[#8B4513]/80
-      prose-strong:text-[#8B4513]
-      prose-em:text-[#8B4513]/90
-      prose-blockquote:border-l-[#8B4513]
-      prose-blockquote:text-[#8B4513]/70
-      prose-ul:text-[#8B4513]/70
-      prose-ol:text-[#8B4513]/70;
+/* Journal-specific placeholder styles */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: rgba(139, 69, 19, 0.4);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }
 
-/* Journal-specific placeholder styles */
-.journal-placeholder:empty:before {
+/* Placeholder styles for every empty paragraph */
+/* Only show placeholder on first empty paragraph */
+.tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  @apply text-[#8B4513]/40 pointer-events-none h-0;
+  color: rgba(139, 69, 19, 0.4);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }

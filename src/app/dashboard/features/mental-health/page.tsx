@@ -1,23 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
 import JournalClient from "./components/journal-client";
 import { Suspense } from "react";
+import { getJournalEntries } from "./journal-actions";
 
 export default async function MentalHealthPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-
-  // Fetch initial data
-  const { data: journals } = await supabase
-    .from("journals")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const entries = await getJournalEntries();
 
   return (
     <div className="relative mx-auto max-w-7xl p-8 space-y-6">
@@ -28,7 +15,7 @@ export default async function MentalHealthPage() {
       </header>
 
       <Suspense fallback={<div>Loading your journal...</div>}>
-        <JournalClient initialEntries={journals || []} />
+        <JournalClient initialEntries={entries} />
       </Suspense>
     </div>
   );
