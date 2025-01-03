@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Calendar, BarChart2, Coffee } from "lucide-react";
+import { Plus, Coffee, BarChart2, Calendar } from "lucide-react";
 import NewEntryDialog from "./new-entry-dialog";
-import JournalCalendar from "./journal-calendar";
+import JournalHybridView from "./journal-hybrid-view";
 import MoodTracker from "./mood-tracker";
 import JournalEntries from "./journal-entries";
+import { JournalEntry } from "../types";
 
 interface JournalClientProps {
-  initialEntries: any[]; // We'll type this properly later
+  initialEntries: JournalEntry[];
 }
 
 export default function JournalClient({ initialEntries }: JournalClientProps) {
-  const [view, setView] = useState<"list" | "calendar" | "analytics">("list");
+  const [view, setView] = useState<"list" | "hybrid" | "analytics">("list");
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false);
 
   return (
@@ -31,9 +32,9 @@ export default function JournalClient({ initialEntries }: JournalClientProps) {
             <Coffee className="w-5 h-5" />
           </button>
           <button
-            onClick={() => setView("calendar")}
+            onClick={() => setView("hybrid")}
             className={`p-2 rounded-lg transition-colors ${
-              view === "calendar"
+              view === "hybrid"
                 ? "bg-[#8B4513] text-white"
                 : "hover:bg-[#8B4513]/5 text-[#8B4513]"
             }`}
@@ -72,7 +73,7 @@ export default function JournalClient({ initialEntries }: JournalClientProps) {
       {/* Main Content */}
       <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm min-h-[500px]">
         {view === "list" && <JournalEntries entries={initialEntries} />}
-        {view === "calendar" && <JournalCalendar entries={initialEntries} />}
+        {view === "hybrid" && <JournalHybridView entries={initialEntries} />}
         {view === "analytics" && <div>Analytics view coming soon...</div>}
       </div>
 
