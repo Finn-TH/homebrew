@@ -6,7 +6,9 @@ import NewEntryDialog from "./new-entry-dialog";
 import JournalHybridView from "./journal-hybrid-view";
 import MoodTracker from "./mood-tracker";
 import JournalEntries from "./journal-entries";
+import MentalHealthAnalytics from "./mental-health-analytics";
 import { JournalEntry } from "../types";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface JournalClientProps {
   initialEntries: JournalEntry[];
@@ -70,12 +72,23 @@ export default function JournalClient({ initialEntries }: JournalClientProps) {
         <MoodTracker />
       </div>
 
-      {/* Main Content */}
-      <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm min-h-[500px]">
-        {view === "list" && <JournalEntries entries={initialEntries} />}
-        {view === "hybrid" && <JournalHybridView entries={initialEntries} />}
-        {view === "analytics" && <div>Analytics view coming soon...</div>}
-      </div>
+      {/* Main Content with Animations */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={view}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white/80 rounded-xl p-6 backdrop-blur-sm min-h-[500px]"
+        >
+          {view === "list" && <JournalEntries entries={initialEntries} />}
+          {view === "hybrid" && <JournalHybridView entries={initialEntries} />}
+          {view === "analytics" && (
+            <MentalHealthAnalytics entries={initialEntries} />
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       {/* New Entry Dialog */}
       <NewEntryDialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen} />

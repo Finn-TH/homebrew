@@ -1,10 +1,4 @@
 export type Mood = "happy" | "calm" | "neutral" | "angry" | "anxious" | "sad";
-export type Activity =
-  | "Exercise"
-  | "Meditation"
-  | "Therapy"
-  | "Reading"
-  | "Nature";
 
 export interface JournalEntry {
   id: string;
@@ -15,7 +9,7 @@ export interface JournalEntry {
   gratitude: string | null;
   created_at: string;
   updated_at: string;
-  activities?: Activity[];
+  activities: string[];
 }
 
 export interface DailyMood {

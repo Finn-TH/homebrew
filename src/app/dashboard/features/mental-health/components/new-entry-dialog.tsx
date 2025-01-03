@@ -3,13 +3,21 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { useState } from "react";
-import { MOOD_EMOJIS, type Mood, type Activity } from "../types";
+import { MOOD_EMOJIS, type Mood } from "../types";
 import RichTextEditor from "./rich-text-editor";
 
 interface NewEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const ACTIVITY_OPTIONS = [
+  "Exercise",
+  "Meditation",
+  "Therapy",
+  "Reading",
+  "Nature",
+];
 
 export default function NewEntryDialog({
   open,
@@ -19,7 +27,7 @@ export default function NewEntryDialog({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [gratitude, setGratitude] = useState("");
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<string[]>([]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -108,27 +116,25 @@ export default function NewEntryDialog({
                 Activities
               </label>
               <div className="flex flex-wrap gap-2">
-                {["Exercise", "Meditation", "Therapy", "Reading", "Nature"].map(
-                  (activity) => (
-                    <button
-                      key={activity}
-                      onClick={() => {
-                        setActivities((prev) =>
-                          prev.includes(activity as Activity)
-                            ? prev.filter((a) => a !== activity)
-                            : [...prev, activity as Activity]
-                        );
-                      }}
-                      className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                        activities.includes(activity as Activity)
-                          ? "bg-[#8B4513] text-white"
-                          : "bg-[#8B4513]/5 text-[#8B4513] hover:bg-[#8B4513]/10"
-                      }`}
-                    >
-                      {activity}
-                    </button>
-                  )
-                )}
+                {ACTIVITY_OPTIONS.map((activity) => (
+                  <button
+                    key={activity}
+                    onClick={() => {
+                      setActivities((prev) =>
+                        prev.includes(activity)
+                          ? prev.filter((a) => a !== activity)
+                          : [...prev, activity]
+                      );
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                      activities.includes(activity)
+                        ? "bg-[#8B4513] text-white"
+                        : "bg-[#8B4513]/5 text-[#8B4513] hover:bg-[#8B4513]/10"
+                    }`}
+                  >
+                    {activity}
+                  </button>
+                ))}
               </div>
             </div>
 
