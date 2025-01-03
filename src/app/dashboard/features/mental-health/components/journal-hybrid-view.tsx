@@ -9,6 +9,7 @@ import {
   eachDayOfInterval,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { JournalEntry, MOOD_EMOJIS } from "../types";
 
 interface JournalHybridViewProps {
@@ -100,73 +101,104 @@ export default function JournalHybridView({ entries }: JournalHybridViewProps) {
         </div>
       </div>
 
-      {/* Entries List */}
-      <div className="col-span-8 space-y-4">
+      {/* Animated Entries List */}
+      <motion.div
+        className="col-span-8 space-y-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <h3 className="text-xl font-semibold text-[#8B4513]">
           {format(selectedDate, "EEEE, MMMM d, yyyy")}
         </h3>
 
-        {selectedDayEntries.length === 0 ? (
-          <div className="bg-white rounded-lg p-6 text-center text-[#8B4513]/60 border border-[#8B4513]/10">
-            No entries for this day
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {selectedDayEntries.map((entry) => (
-              <div
-                key={entry.id}
-                className="bg-white rounded-lg p-6 shadow-sm border border-[#8B4513]/10"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="space-y-1">
-                    {entry.title && (
-                      <h4 className="text-lg font-medium text-[#8B4513]">
-                        {entry.title}
-                      </h4>
-                    )}
-                    <div className="flex items-center gap-2">
-                      {entry.mood && (
-                        <span className="text-xl" title={entry.mood}>
-                          {MOOD_EMOJIS[entry.mood]}
-                        </span>
-                      )}
-                      <span className="text-sm text-[#8B4513]/70">
-                        {format(new Date(entry.created_at), "h:mm a")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="prose prose-brown max-w-none mb-4">
-                  <div dangerouslySetInnerHTML={{ __html: entry.content }} />
-                </div>
-
-                {entry.gratitude && (
-                  <div className="bg-[#8B4513]/5 rounded-lg p-4 mb-4">
-                    <h5 className="font-medium text-[#8B4513] mb-2">
-                      Gratitude
-                    </h5>
-                    <p className="text-[#8B4513]/70">{entry.gratitude}</p>
-                  </div>
-                )}
-
-                {entry.activities && entry.activities.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {entry.activities.map((activity) => (
-                      <span
-                        key={activity}
-                        className="px-2 py-1 text-sm rounded-full bg-[#8B4513]/10 text-[#8B4513]"
-                      >
-                        {activity}
-                      </span>
-                    ))}
-                  </div>
-                )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedDate.toISOString()}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {selectedDayEntries.length === 0 ? (
+              <div className="bg-white rounded-lg p-6 text-center text-[#8B4513]/60 border border-[#8B4513]/10">
+                No entries for this day
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            ) : (
+              <div className="space-y-4">
+                <AnimatePresence>
+                  {selectedDayEntries.map((entry, index) => (
+                    <motion.div
+                      key={entry.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-lg p-6 shadow-sm border border-[#8B4513]/10"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="space-y-1">
+                          {entry.title && (
+                            <h4 className="text-lg font-medium text-[#8B4513]">
+                              {entry.title}
+                            </h4>
+                          )}
+                          <div className="flex items-center gap-2">
+                            {entry.mood && (
+                              <span className="text-xl" title={entry.mood}>
+                                {MOOD_EMOJIS[entry.mood]}
+                              </span>
+                            )}
+                            <span className="text-sm text-[#8B4513]/70">
+                              {format(new Date(entry.created_at), "h:mm a")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 + index * 0.1 }}
+                      >
+                        <div className="prose prose-brown max-w-none mb-4">
+                          <div
+                            dangerouslySetInnerHTML={{ __html: entry.content }}
+                          />
+                        </div>
+
+                        {entry.gratitude && (
+                          <div className="bg-[#8B4513]/5 rounded-lg p-4 mb-4">
+                            <h5 className="font-medium text-[#8B4513] mb-2">
+                              Gratitude
+                            </h5>
+                            <p className="text-[#8B4513]/70">
+                              {entry.gratitude}
+                            </p>
+                          </div>
+                        )}
+
+                        {entry.activities && entry.activities.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {entry.activities.map((activity) => (
+                              <span
+                                key={activity}
+                                className="px-2 py-1 text-sm rounded-full bg-[#8B4513]/10 text-[#8B4513]"
+                              >
+                                {activity}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
