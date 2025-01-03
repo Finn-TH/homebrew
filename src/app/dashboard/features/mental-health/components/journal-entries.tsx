@@ -32,8 +32,13 @@ export default function JournalEntries({ entries }: JournalEntriesProps) {
 
   if (!entries.length) {
     return (
-      <div className="text-center py-12 text-[#8B4513]/60">
-        No journal entries yet. Start writing to track your journey!
+      <div className="text-center py-12">
+        <p className="text-[#8B4513]/60 mb-4">
+          No journal entries for this week yet.
+        </p>
+        <p className="text-[#8B4513]/60">
+          Start journaling to track your mental health journey.
+        </p>
       </div>
     );
   }

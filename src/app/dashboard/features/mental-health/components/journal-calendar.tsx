@@ -11,13 +11,8 @@ import {
   subMonths,
 } from "date-fns";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Coffee } from "lucide-react";
-
-interface JournalEntry {
-  id: string;
-  date: string;
-  mood: number;
-}
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { JournalEntry, MOOD_EMOJIS } from "../types";
 
 interface JournalCalendarProps {
   entries: JournalEntry[];
@@ -29,8 +24,8 @@ export default function JournalCalendar({ entries }: JournalCalendarProps) {
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const getDayEntry = (day: Date) =>
-    entries.find((entry) => isSameDay(new Date(entry.date), day));
+  const getDayEntries = (day: Date) =>
+    entries.filter((entry) => isSameDay(new Date(entry.created_at), day));
 
   return (
     <div className="space-y-4">
@@ -63,29 +58,58 @@ export default function JournalCalendar({ entries }: JournalCalendarProps) {
             {day}
           </div>
         ))}
-        {days.map((day, dayIdx) => {
-          const entry = getDayEntry(day);
+        {days.map((day) => {
+          const dayEntries = getDayEntries(day);
+          const hasEntries = dayEntries.length > 0;
+
           return (
             <div
               key={day.toString()}
               className={`min-h-[100px] p-4 bg-white ${
                 !isSameMonth(day, currentDate) ? "opacity-50" : ""
-              }`}
+              } ${hasEntries ? "cursor-pointer hover:bg-[#8B4513]/5" : ""}`}
             >
               <div className="flex flex-col h-full">
                 <span
                   className={`text-sm ${
-                    entry ? "font-medium text-[#8B4513]" : "text-[#8B4513]/60"
+                    hasEntries
+                      ? "font-medium text-[#8B4513]"
+                      : "text-[#8B4513]/60"
                   }`}
                 >
                   {format(day, "d")}
                 </span>
-                {entry && (
-                  <div className="flex mt-2">
-                    {Array.from({ length: entry.mood }).map((_, i) => (
-                      <span key={i} className="text-[#8B4513]">
-                        ☕️
-                      </span>
+
+                {hasEntries && (
+                  <div className="mt-2 space-y-2">
+                    {dayEntries.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        {entry.mood && (
+                          <span className="text-base">
+                            {MOOD_EMOJIS[entry.mood]}
+                          </span>
+                        )}
+                        {entry.title && (
+                          <span className="text-[#8B4513] truncate">
+                            {entry.title}
+                          </span>
+                        )}
+                        {entry.activities && entry.activities.length > 0 && (
+                          <div className="flex gap-1">
+                            {entry.activities.map((activity) => (
+                              <span
+                                key={activity}
+                                className="px-1.5 py-0.5 text-xs rounded-full bg-[#8B4513]/10 text-[#8B4513]"
+                              >
+                                {activity}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}

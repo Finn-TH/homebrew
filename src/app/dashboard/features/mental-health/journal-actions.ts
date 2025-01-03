@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { JournalEntry, Activity, Mood } from "./types";
+import { startOfWeek, endOfWeek } from "date-fns";
 
 interface JournalEntryWithActivities extends JournalEntry {
   journal_entry_activities: {
@@ -77,6 +78,35 @@ export async function getJournalEntries() {
     .returns<JournalEntryWithActivities[]>();
 
   if (entriesError) throw entriesError;
+
+  return entries.map((entry: JournalEntryWithActivities) => ({
+    ...entry,
+    activities: entry.journal_entry_activities?.map((a) => a.activity) || [],
+  }));
+}
+
+export async function getCurrentWeekEntries() {
+  const supabase = await createClient();
+
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start from Monday
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+  const { data: entries, error } = await supabase
+    .from("journal_entries")
+    .select(
+      `
+      *,
+      journal_entry_activities (
+        activity
+      )
+    `
+    )
+    .gte("created_at", weekStart.toISOString())
+    .lte("created_at", weekEnd.toISOString())
+    .order("created_at", { ascending: false })
+    .returns<JournalEntryWithActivities[]>();
+
+  if (error) throw error;
 
   return entries.map((entry: JournalEntryWithActivities) => ({
     ...entry,
