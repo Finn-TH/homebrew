@@ -41,10 +41,16 @@ ChartJS.register(
 
 interface MentalHealthAnalyticsProps {
   entries: JournalEntry[];
+  dailyMoods?: {
+    mood: number;
+    energy: number;
+    created_at: string;
+  }[];
 }
 
 export default function MentalHealthAnalytics({
   entries,
+  dailyMoods = [],
 }: MentalHealthAnalyticsProps) {
   const [timeRange, setTimeRange] = useState<"week" | "month">("week");
 
@@ -151,6 +157,19 @@ export default function MentalHealthAnalytics({
     });
     return acc;
   }, {} as Record<string, number>);
+
+  // Prepare daily mood logs data
+  const dailyMoodTrendData = daysInRange.map((date) => {
+    const dateKey = format(date, "yyyy-MM-dd");
+    const dailyLog = dailyMoods.find(
+      (mood) => format(new Date(mood.created_at), "yyyy-MM-dd") === dateKey
+    );
+    return {
+      date: format(date, "MMM d"),
+      mood: dailyLog?.mood || null,
+      energy: dailyLog?.energy || null,
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -307,54 +326,107 @@ export default function MentalHealthAnalytics({
         </div>
       </div>
 
-      {/* Mood Trends Over Time */}
-      <div className="bg-white/80 p-6 rounded-xl">
-        <h3 className="text-lg font-semibold text-[#8B4513] mb-4">
-          Mood Trends
-        </h3>
-        <Line
-          data={{
-            labels: moodTrendData.map((d) => d.date),
-            datasets: [
-              {
-                label: "Mood Pattern",
-                data: moodTrendData.map((d) => d.value),
-                borderColor: "#8B4513",
-                backgroundColor: "rgba(139, 69, 19, 0.1)",
-                tension: 0.3,
-                fill: true,
-                spanGaps: true, // Connect points across gaps
+      {/* Mood Trends Section - Now side by side */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Journal Entry Moods */}
+        <div className="bg-white/80 p-4 rounded-xl">
+          <h3 className="text-base font-semibold text-[#8B4513] mb-3">
+            Journal Mood Trends
+          </h3>
+          <Line
+            data={{
+              labels: moodTrendData.map((d) => d.date),
+              datasets: [
+                {
+                  label: "Journal Moods",
+                  data: moodTrendData.map((d) => d.value),
+                  borderColor: "#8B4513",
+                  backgroundColor: "rgba(139, 69, 19, 0.1)",
+                  tension: 0.3,
+                  fill: true,
+                  spanGaps: true,
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  display: false,
+                },
               },
-            ],
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: {
-                display: false,
-              },
-            },
-            scales: {
-              y: {
-                min: 0,
-                max: 5,
-                ticks: {
-                  stepSize: 1,
-                  callback: (value) => {
-                    const labels = ["", "Low", "", "Neutral", "", "High"];
-                    return labels[value as number];
+              scales: {
+                y: {
+                  min: 0,
+                  max: 5,
+                  ticks: {
+                    stepSize: 1,
+                    callback: (value) => {
+                      const labels = ["", "Low", "", "Neutral", "", "High"];
+                      return labels[value as number];
+                    },
                   },
                 },
               },
-              x: {
-                ticks: {
-                  maxRotation: 45,
-                  minRotation: 45,
+            }}
+          />
+        </div>
+
+        {/* Daily Mood Tracker Logs */}
+        <div className="bg-white/80 p-4 rounded-xl">
+          <h3 className="text-base font-semibold text-[#8B4513] mb-3">
+            Daily Mood & Energy Levels
+          </h3>
+          <Line
+            data={{
+              labels: dailyMoodTrendData.map((d) => d.date),
+              datasets: [
+                {
+                  label: "Mood",
+                  data: dailyMoodTrendData.map((d) => d.mood),
+                  borderColor: "#8B4513",
+                  backgroundColor: "rgba(139, 69, 19, 0.1)",
+                  tension: 0.3,
+                  fill: true,
+                  spanGaps: true,
+                },
+                {
+                  label: "Energy",
+                  data: dailyMoodTrendData.map((d) => d.energy),
+                  borderColor: "#A0522D",
+                  backgroundColor: "rgba(160, 82, 45, 0.1)",
+                  tension: 0.3,
+                  fill: true,
+                  spanGaps: true,
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  display: true,
+                  position: "top",
+                  labels: {
+                    boxWidth: 12,
+                    padding: 8,
+                  },
                 },
               },
-            },
-          }}
-        />
+              scales: {
+                y: {
+                  min: 0,
+                  max: 5,
+                  ticks: {
+                    stepSize: 1,
+                  },
+                },
+              },
+            }}
+          />
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,13 @@
 import { Suspense } from "react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import JournalClient from "./components/journal-client";
-import { getCurrentWeekEntries } from "./journal-actions";
+import { getCurrentWeekEntries, getDailyMoods } from "./journal-actions";
 
 export default async function MentalHealthPage() {
-  const entries = await getCurrentWeekEntries();
+  const [entries, dailyMoods] = await Promise.all([
+    getCurrentWeekEntries(),
+    getDailyMoods(),
+  ]);
   const weekStart = format(
     startOfWeek(new Date(), { weekStartsOn: 1 }),
     "MMMM d"
@@ -28,7 +31,7 @@ export default async function MentalHealthPage() {
       </header>
 
       <Suspense fallback={<div>Loading your journal...</div>}>
-        <JournalClient initialEntries={entries} />
+        <JournalClient initialEntries={entries} dailyMoods={dailyMoods} />
       </Suspense>
     </div>
   );
