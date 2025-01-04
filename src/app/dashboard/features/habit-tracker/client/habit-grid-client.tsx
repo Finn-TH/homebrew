@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Flame, X, Circle } from "lucide-react";
 import HabitRow from "./habit-row";
 import { Habit, HabitRecord } from "../types";
+import { formatDateKey } from "../utils/date-utils";
 
 interface HabitGridProps {
   initialHabits: Record<string, Habit[]>;
@@ -43,35 +44,39 @@ export default function HabitGrid({
 
   const weekStart = getWeekStart();
 
+  const today = formatDateKey(new Date());
+  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // Get dates for the week
+  const dates = [...Array(7)].map((_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - date.getDay() + i + 1);
+    return {
+      day: weekDays[i],
+      date: date.getDate(),
+      full: formatDateKey(date),
+      isToday: formatDateKey(date) === today,
+    };
+  });
+
   return (
     <div className="rounded-xl border border-[#8B4513]/10 bg-white/80 backdrop-blur-sm shadow-sm">
       <div className="grid grid-cols-[auto_1fr_repeat(7,_minmax(48px,_1fr))] items-center gap-4 border-b border-[#8B4513]/10 px-4 py-3">
         <span className="w-8" />
         <span className="text-sm font-medium text-[#8B4513]">Habit</span>
-        {[...Array(7)].map((_, i) => {
-          const date = new Date(weekStart);
-          date.setDate(weekStart.getDate() + i);
-          const isToday = new Date().getDate() === date.getDate();
-
-          return (
-            <div key={i} className="text-center">
-              <div
-                className={`text-xs ${
-                  isToday ? "text-[#8B4513]" : "text-[#8B4513]/40"
-                }`}
-              >
-                {date.toLocaleDateString("en-US", { weekday: "short" })}
-              </div>
-              <div
-                className={`text-sm ${
-                  isToday ? "text-[#8B4513]" : "text-[#8B4513]/40"
-                }`}
-              >
-                {date.getDate()}
-              </div>
-            </div>
-          );
-        })}
+        {dates.map(({ day, date, isToday }) => (
+          <div
+            key={day}
+            className={`text-center text-sm ${
+              isToday
+                ? "font-medium text-white bg-[#8B4513] rounded-lg py-1"
+                : "text-[#8B4513]/60"
+            }`}
+          >
+            <div>{day}</div>
+            <div>{date}</div>
+          </div>
+        ))}
       </div>
 
       {Object.entries(initialHabits).map(([category, habits]) => (

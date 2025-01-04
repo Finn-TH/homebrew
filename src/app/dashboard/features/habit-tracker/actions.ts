@@ -131,3 +131,59 @@ export async function deleteHabit(habitId: string): Promise<void> {
 
   revalidatePath("/dashboard/features/habit-tracker");
 }
+
+export async function logDailyHabit(
+  habitId: string,
+  date: string,
+  status: HabitStatus
+): Promise<void> {
+  const supabase = await createClient();
+
+  // Get current habit data
+  const { data: habit } = await supabase
+    .from("habits")
+    .select("current_streak, longest_streak, total_completions")
+    .eq("id", habitId)
+    .single();
+
+  if (!habit) throw new Error("Habit not found");
+
+  let { current_streak, longest_streak, total_completions } = habit;
+
+  // Update streaks based on status
+  if (status === "completed") {
+    current_streak++;
+    longest_streak = Math.max(longest_streak, current_streak);
+    total_completions++;
+  } else {
+    current_streak = 0;
+  }
+
+  // Update habit record
+  const { error: recordError } = await supabase.from("habit_records").upsert(
+    {
+      habit_id: habitId,
+      date: date,
+      status: status,
+    },
+    {
+      onConflict: "habit_id,date",
+    }
+  );
+
+  if (recordError) throw recordError;
+
+  // Update habit stats
+  const { error: habitError } = await supabase
+    .from("habits")
+    .update({
+      current_streak,
+      longest_streak,
+      total_completions,
+    })
+    .eq("id", habitId);
+
+  if (habitError) throw habitError;
+
+  revalidatePath("/dashboard/features/habit-tracker");
+}
