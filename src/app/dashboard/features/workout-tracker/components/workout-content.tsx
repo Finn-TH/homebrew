@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import AddWorkoutButton from "../add-workout/add-workout-button";
-import WorkoutsDisplay from "./workouts-display";
 import ViewSwitcher from "./view-switcher";
+import WorkoutsDisplay from "./workouts-display";
+import WorkoutAnalytics from "./workout-analytics";
+import AddWorkoutButton from "../add-workout/add-workout-button";
 import { WorkoutLog } from "../types";
 
 interface WorkoutContentProps {
@@ -13,15 +14,23 @@ interface WorkoutContentProps {
 export default function WorkoutContent({
   initialWorkouts,
 }: WorkoutContentProps) {
-  const [view, setView] = useState<"daily" | "weekly">("daily");
+  const [view, setView] = useState<"daily" | "weekly" | "analytics">("daily");
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <ViewSwitcher view={view} onChange={setView} />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <ViewSwitcher
+          view={view}
+          onChange={(v) => setView(v as "daily" | "weekly" | "analytics")}
+        />
         <AddWorkoutButton />
       </div>
-      <WorkoutsDisplay initialWorkouts={initialWorkouts} viewType={view} />
+
+      {view === "analytics" ? (
+        <WorkoutAnalytics workouts={initialWorkouts} />
+      ) : (
+        <WorkoutsDisplay initialWorkouts={initialWorkouts} viewType={view} />
+      )}
     </div>
   );
 }
