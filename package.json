@@ -12,6 +12,7 @@
     "auth:supabase": "node scripts/switch-auth.js supabase"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@headlessui/react": "^2.2.0",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.4",
