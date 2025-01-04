@@ -1,7 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import FeatureLayout from "../../components/layout/feature-layout";
-import HabitTrackerServer from "./server/habit-tracker-server";
-import AddHabitButton from "./add-habit/add-habit-button";
+import HabitContent from "./components/habit-content";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -19,12 +18,20 @@ export default async function HabitTrackerPage() {
     throw new Error("User not authenticated");
   }
 
+  // Fetch habits and records for analytics
+  const { data: habits } = await supabase
+    .from("habits")
+    .select("*")
+    .eq("user_id", user.id);
+
+  const { data: records } = await supabase
+    .from("habit_records")
+    .select("*")
+    .in("habit_id", habits?.map((h) => h.id) || []);
+
   return (
     <FeatureLayout user={user} title="Habit Tracker">
-      <div className="space-y-6">
-        <AddHabitButton />
-        <HabitTrackerServer />
-      </div>
+      <HabitContent habits={habits || []} records={records || []} />
     </FeatureLayout>
   );
 }
