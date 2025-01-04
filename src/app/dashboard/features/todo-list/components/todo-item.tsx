@@ -100,13 +100,14 @@ export default function TodoItem({
   return (
     <li
       className={`grid grid-cols-[auto_1fr_150px_100px] items-center gap-4 rounded-lg border p-4 
-                 transition-colors duration-200 cursor-pointer
+                 transition-all duration-200 cursor-pointer
                  ${
                    isSelected
                      ? "bg-[#8B4513]/5 border-[#8B4513]/20"
                      : "border-[#8B4513]/10"
                  }
-                 hover:bg-[#8B4513]/5`}
+                 hover:bg-[#8B4513]/5 hover:scale-[1.01] hover:shadow-sm
+                 group animate-fadeIn`}
       onClick={onSelect}
     >
       <button
