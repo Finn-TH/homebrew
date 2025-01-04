@@ -48,6 +48,36 @@ interface MentalHealthAnalyticsProps {
   }[];
 }
 
+// Add these color constants at the top
+const COLORS = {
+  journalMood: {
+    line: "#8B4513",
+    fill: "rgba(139, 69, 19, 0.1)",
+  },
+  dailyMood: {
+    line: "#A0522D", // Saddle Brown
+    fill: "rgba(160, 82, 45, 0.1)",
+  },
+  energy: {
+    line: "#6B8E23", // Olive Drab (greenish)
+    fill: "rgba(107, 142, 35, 0.1)",
+  },
+  moods: {
+    happy: "#FFB347", // Pastel Orange
+    calm: "#98B4D4", // Pastel Blue
+    neutral: "#D3D3D3", // Light Gray
+    anxious: "#FFD1DC", // Pastel Pink
+    sad: "#CBC3E3", // Pastel Purple
+  },
+  activities: {
+    Exercise: "#8B4513", // Dark Brown
+    Nature: "#6B8E23", // Olive Green
+    Meditation: "#A0522D", // Saddle Brown
+    Therapy: "#CD853F", // Peru
+    Reading: "#DEB887", // Burlywood
+  },
+};
+
 export default function MentalHealthAnalytics({
   entries,
   dailyMoods = [],
@@ -267,22 +297,26 @@ export default function MentalHealthAnalytics({
                 datasets: [
                   {
                     data: Object.values(moodCounts),
-                    backgroundColor: [
-                      "rgba(139, 69, 19, 0.8)",
-                      "rgba(139, 69, 19, 0.6)",
-                      "rgba(139, 69, 19, 0.4)",
-                      "rgba(139, 69, 19, 0.3)",
-                      "rgba(139, 69, 19, 0.2)",
-                      "rgba(139, 69, 19, 0.1)",
-                    ],
+                    backgroundColor: Object.keys(moodCounts).map(
+                      (mood) =>
+                        COLORS.moods[
+                          mood.toLowerCase() as keyof typeof COLORS.moods
+                        ]
+                    ),
+                    borderColor: "white",
+                    borderWidth: 2,
                   },
                 ],
               }}
               options={{
-                responsive: true,
                 plugins: {
                   legend: {
                     position: "bottom",
+                    labels: {
+                      usePointStyle: true,
+                      padding: 15,
+                      color: "#8B4513",
+                    },
                   },
                 },
               }}
@@ -295,34 +329,55 @@ export default function MentalHealthAnalytics({
           <h3 className="text-lg font-semibold text-[#8B4513] mb-4">
             Activity Frequency
           </h3>
-          <Bar
-            data={{
-              labels: Object.keys(activityCounts),
-              datasets: [
-                {
-                  label: "Times Practiced",
-                  data: Object.values(activityCounts),
-                  backgroundColor: "rgba(139, 69, 19, 0.6)",
-                },
-              ],
-            }}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  display: false,
-                },
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    stepSize: 1,
+          <div className="h-[300px]">
+            <Bar
+              data={{
+                labels: Object.keys(activityCounts),
+                datasets: [
+                  {
+                    data: Object.values(activityCounts),
+                    backgroundColor: Object.keys(activityCounts).map(
+                      (activity) =>
+                        COLORS.activities[
+                          activity as keyof typeof COLORS.activities
+                        ]
+                    ),
+                    borderColor: "white",
+                    borderWidth: 2,
+                    borderRadius: 4,
+                  },
+                ],
+              }}
+              options={{
+                plugins: {
+                  legend: {
+                    display: false,
                   },
                 },
-              },
-            }}
-          />
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1,
+                      color: "#8B4513",
+                    },
+                    grid: {
+                      color: "rgba(139, 69, 19, 0.1)",
+                    },
+                  },
+                  x: {
+                    ticks: {
+                      color: "#8B4513",
+                    },
+                    grid: {
+                      display: false,
+                    },
+                  },
+                },
+                maintainAspectRatio: false,
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -340,8 +395,8 @@ export default function MentalHealthAnalytics({
                 {
                   label: "Journal Moods",
                   data: moodTrendData.map((d) => d.value),
-                  borderColor: "#8B4513",
-                  backgroundColor: "rgba(139, 69, 19, 0.1)",
+                  borderColor: COLORS.journalMood.line,
+                  backgroundColor: COLORS.journalMood.fill,
                   tension: 0.3,
                   fill: true,
                   spanGaps: true,
@@ -385,8 +440,8 @@ export default function MentalHealthAnalytics({
                 {
                   label: "Mood",
                   data: dailyMoodTrendData.map((d) => d.mood),
-                  borderColor: "#8B4513",
-                  backgroundColor: "rgba(139, 69, 19, 0.1)",
+                  borderColor: COLORS.dailyMood.line,
+                  backgroundColor: COLORS.dailyMood.fill,
                   tension: 0.3,
                   fill: true,
                   spanGaps: true,
@@ -394,8 +449,8 @@ export default function MentalHealthAnalytics({
                 {
                   label: "Energy",
                   data: dailyMoodTrendData.map((d) => d.energy),
-                  borderColor: "#A0522D",
-                  backgroundColor: "rgba(160, 82, 45, 0.1)",
+                  borderColor: COLORS.energy.line,
+                  backgroundColor: COLORS.energy.fill,
                   tension: 0.3,
                   fill: true,
                   spanGaps: true,
