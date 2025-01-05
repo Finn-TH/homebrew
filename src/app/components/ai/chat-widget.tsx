@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Send, X, Coffee } from "lucide-react";
+import { MessageCircle, Send, X, Coffee, HelpCircle, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 
@@ -229,6 +229,37 @@ export function ChatWidget() {
               <h3 className="text-xl font-semibold text-[#8B4513]">
                 HomeBrew Assistant
               </h3>
+              <button
+                onClick={() => {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      role: "assistant",
+                      content: `Here's how I can help you, Sir:
+
+### Data Queries
+- Include a Data Query Keyword like Data/Database in your message
+- Query is contextual to your data
+- Say "show my spending data" to view financial data
+- Ask about "workouts data" to see fitness stats
+- Mention "nutrition data" to check meal logs
+- Use "habits data" to track your progress
+
+### General Help
+- Ask any question
+- Request analysis or insights
+- Get recommendations
+- Track your goals
+
+Just brew up a question, and I'll help you analyze the perfect data blend! ☕`,
+                    },
+                  ]);
+                }}
+                className="ml-2 p-1.5 hover:bg-[#8B4513]/10 rounded-full transition-colors"
+                aria-label="How to use HomeBrew Assistant"
+              >
+                <HelpCircle className="h-5 w-5 text-[#8B4513]" />
+              </button>
             </div>
             <button
               onClick={() => setIsOpen(false)}
