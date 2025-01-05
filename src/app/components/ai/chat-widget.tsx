@@ -257,15 +257,32 @@ export function ChatWidget() {
                       : "bg-white border border-[#DEB887]/20"
                   }`}
                 >
-                  {message.role === "assistant" ? (
-                    message.content.split("\n").map((text, i) => (
-                      <p key={i} className="mb-2 last:mb-0">
-                        {text}
-                      </p>
-                    ))
-                  ) : (
-                    <p>{message.content}</p>
-                  )}
+                  <ReactMarkdown
+                    className="prose prose-brown dark:prose-invert"
+                    components={{
+                      h3: ({ children }) => (
+                        <h3 className="text-lg font-semibold mb-2">
+                          {children}
+                        </h3>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="list-disc pl-4 space-y-1">{children}</ul>
+                      ),
+                      li: ({ children }) => (
+                        <li className="text-base">{children}</li>
+                      ),
+                      p: ({ children }) => (
+                        <p className="mb-2 last:mb-0">{children}</p>
+                      ),
+                      code: ({ children }) => (
+                        <code className="bg-[#DEB887]/10 rounded px-1">
+                          {children}
+                        </code>
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
                 </div>
               </motion.div>
             ))}

@@ -328,7 +328,10 @@ export async function POST(req: Request) {
       const directResponse = await openai.chat.completions.create({
         model: OPENAI_CONSTANTS.MODEL,
         messages: [
-          { role: "system", content: SYSTEM_PROMPTS.DATA_ANALYSIS },
+          {
+            role: "system",
+            content: SYSTEM_PROMPTS.CONVERSATION_ROUTER,
+          },
           ...conversationHistory,
           { role: "user", content: message },
         ],
