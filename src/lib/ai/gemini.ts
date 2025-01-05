@@ -1,28 +1,22 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-// Initialize the model
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
+export interface GenerationConfig {
+  temperature: number;
+  topP: number;
+  topK: number;
+  maxOutputTokens: number;
+}
 
-// Get the model
-export const getModel = () => {
-  return genAI.getGenerativeModel({ model: "gemini-pro" });
+export const DEFAULT_CONFIG: GenerationConfig = {
+  temperature: 1,
+  topP: 0.95,
+  topK: 40,
+  maxOutputTokens: 1000,
 };
 
-// Helper for chat initialization
-export const initializeChat = (model: any) => {
-  return model.startChat({
-    generationConfig: {
-      maxOutputTokens: 1000,
-      temperature: 0.7,
-      topP: 0.8,
-      topK: 40,
-    },
-    safetySettings: [
-      {
-        category: "HARM_CATEGORY_HARASSMENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE",
-      },
-      // Add other safety settings as needed
-    ],
-  });
-};
+export const DEFAULT_SAFETY_SETTINGS = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+];

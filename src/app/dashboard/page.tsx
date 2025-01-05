@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { FeatureGrid } from "./components/ui/feature-card";
+import { ChatWidget } from "@/app/components/ai/chat-widget";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -15,6 +16,7 @@ export default async function DashboardPage() {
   return (
     <div className="relative mx-auto max-w-7xl p-8">
       <FeatureGrid user={user} initialPreferences={preferences} />
+      <ChatWidget />
     </div>
   );
 }
