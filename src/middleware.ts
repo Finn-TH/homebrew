@@ -23,5 +23,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/ai/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/api/ai/:path*",
+    "/api/ai/openai/:path*",
+    "/api/ai/gemini/:path*",
+  ],
 };

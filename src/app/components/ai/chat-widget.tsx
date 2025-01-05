@@ -28,11 +28,15 @@ export function ChatWidget() {
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
 
     try {
-      const response = await fetch("/api/ai", {
+      const response = await fetch("/api/ai/openai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage }),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -41,7 +45,7 @@ export function ChatWidget() {
         ...prev,
         {
           role: "assistant",
-          content: data.response,
+          content: data.response || "Sorry, I couldn't process that request.",
         },
       ]);
     } catch (error) {
