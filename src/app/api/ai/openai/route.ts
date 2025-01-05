@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import OpenAI from "openai";
-import { OPENAI_CONSTANTS, SYSTEM_PROMPTS } from "@/lib/ai/openai/openai";
+import {
+  OPENAI_CONSTANTS,
+  SYSTEM_PROMPTS,
+  MEMORY_LIMITS,
+} from "@/lib/ai/openai/openai";
 import {
   BUDGET,
   WORKOUT,
@@ -259,6 +263,47 @@ const functions = [
 
 const DATABASE_KEYWORDS = ["data", "database", "personal", "homebrew"];
 
+interface MemoryStatus {
+  isCleared: boolean;
+  tokenCount: number;
+  remainingCapacity: number;
+  warning?: string;
+}
+
+function checkMemoryStatus(history: any[]): MemoryStatus {
+  const tokenCount = history.reduce((count, msg) => {
+    return count + msg.content.length / 4; // Approximate tokens
+  }, 0);
+
+  const remainingCapacity = MEMORY_LIMITS.MAX_TOKENS - tokenCount;
+  const capacityPercentage = tokenCount / MEMORY_LIMITS.MAX_TOKENS;
+
+  if (tokenCount >= MEMORY_LIMITS.MAX_TOKENS - MEMORY_LIMITS.SAFETY_BUFFER) {
+    return {
+      isCleared: true,
+      tokenCount,
+      remainingCapacity: MEMORY_LIMITS.MAX_TOKENS,
+      warning: "Memory limit reached. Starting new conversation.",
+    };
+  }
+
+  if (capacityPercentage >= MEMORY_LIMITS.WARNING_THRESHOLD) {
+    return {
+      isCleared: false,
+      tokenCount,
+      remainingCapacity,
+      warning: "Approaching memory limit. Context may be cleared soon.",
+    };
+  }
+
+  return {
+    isCleared: false,
+    tokenCount,
+    remainingCapacity,
+    warning: undefined,
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const { message, conversationHistory = [] } = await req.json();
@@ -344,6 +389,12 @@ export async function POST(req: Request) {
         response: analysisResponse.choices[0].message.content,
         data: queryData,
         type: "DATABASE",
+        memoryStatus: {
+          cleared: checkMemoryStatus(conversationHistory).isCleared,
+          warning: checkMemoryStatus(conversationHistory).warning,
+          remainingCapacity:
+            checkMemoryStatus(conversationHistory).remainingCapacity,
+        },
       });
     } catch (dbError) {
       const fallbackResponse = await openai.chat.completions.create({

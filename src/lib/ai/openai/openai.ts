@@ -13,7 +13,7 @@ export const OPENAI_CONSTANTS = {
   // Database operations - More precise, deterministic
   DATABASE: {
     temperature: 0,
-    max_tokens: 8000,
+    max_tokens: 5000,
   } satisfies OpenAIConfig,
 
   // General chat - More creative and conversational
@@ -21,6 +21,14 @@ export const OPENAI_CONSTANTS = {
     temperature: 0.7,
     max_tokens: 3000,
   } satisfies OpenAIConfig,
+} as const;
+
+// Constants for memory management
+export const MEMORY_LIMITS = {
+  MAX_TOKENS: 8000,
+  SAFETY_BUFFER: 1000,
+  MAX_MESSAGES: 10,
+  WARNING_THRESHOLD: 0.8, // 80% of max tokens
 } as const;
 
 // First, let's define our conversation types

@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+
+interface MemoryStatus {
+  cleared: boolean;
+  warning?: string;
+  remainingCapacity: number;
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -15,6 +21,20 @@ export function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [memoryWarning, setMemoryWarning] = useState<string | undefined>();
+
+  // Add ref for chat container
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Add scroll to bottom function
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Add useEffect to scroll on new messages
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,14 +44,17 @@ export function ChatWidget() {
     setInput("");
     setIsLoading(true);
 
-    // Add user message to chat
+    // Immediately add user message
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
 
     try {
       const response = await fetch("/api/ai/openai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({
+          message: userMessage,
+          conversationHistory: messages,
+        }),
       });
 
       if (!response.ok) {
@@ -40,9 +63,29 @@ export function ChatWidget() {
 
       const data = await response.json();
 
-      // Add AI response to chat
+      // Handle memory status
+      if (data.memoryStatus) {
+        if (data.memoryStatus.cleared) {
+          // Clear messages if memory was cleared
+          setMessages([
+            {
+              role: "assistant",
+              content:
+                "Previous conversation context has been cleared due to memory limits.",
+            },
+          ]);
+        }
+
+        if (data.memoryStatus.warning) {
+          setMemoryWarning(data.memoryStatus.warning);
+          // Clear warning after 5 seconds
+          setTimeout(() => setMemoryWarning(undefined), 5000);
+        }
+      }
+
+      // Update to only add AI message since user message is already added
       setMessages((prev) => [
-        ...prev,
+        ...(data.memoryStatus?.cleared ? [] : prev),
         {
           role: "assistant",
           content: data.response || "Sorry, I couldn't process that request.",
@@ -164,6 +207,8 @@ export function ChatWidget() {
                 </div>
               </div>
             )}
+            {/* Add invisible div for scrolling */}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
@@ -187,6 +232,13 @@ export function ChatWidget() {
             </div>
           </form>
         </motion.div>
+      )}
+
+      {/* Add memory warning display */}
+      {memoryWarning && (
+        <div className="absolute top-0 left-0 right-0 p-2 bg-yellow-100 text-yellow-800 text-sm rounded-t-lg">
+          {memoryWarning}
+        </div>
       )}
     </div>
   );
