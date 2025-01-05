@@ -1,28 +1,50 @@
 import OpenAI from "openai";
 
+type ChatCompletionCreateParams = OpenAI.ChatCompletionCreateParams;
+type OpenAIConfig = Pick<
+  ChatCompletionCreateParams,
+  "temperature" | "max_tokens"
+>;
+
 // OpenAI Constants
 export const OPENAI_CONSTANTS = {
-  MODEL: "gpt-4o-mini" as const,
-  MAX_TOKENS: 500,
-  TEMPERATURE: 0.7,
+  MODEL: "gpt-4o-mini-2024-07-18" as const,
+
+  // Database operations - More precise, deterministic
+  DATABASE: {
+    temperature: 0,
+    max_tokens: 8000,
+  } satisfies OpenAIConfig,
+
+  // General chat - More creative and conversational
+  GENERAL: {
+    temperature: 0.7,
+    max_tokens: 3000,
+  } satisfies OpenAIConfig,
 } as const;
 
 // First, let's define our conversation types
-export type ConversationType = "NEW_QUERY" | "FOLLOWUP" | "CONTEXT_SWITCH";
+export type ConversationType = "NEW_QUERY" | "FOLLOWUP" | "GENERAL";
 
 // System prompts
 export const SYSTEM_PROMPTS = {
   // Initial prompt to determine conversation flow
   CONVERSATION_ROUTER: `You are HomeBrew, a personal AI assistant.
-    When users ask about their data, ALWAYS classify as NEW_QUERY first time.
-    Only use FOLLOWUP for specific questions about data just shown.
-    
+    Analyze the user's message and respond with one of these types:
+    - NEW_QUERY: First time querying data
+    - FOLLOWUP: Questions about previously shown data
+    - GENERAL: General advice or questions not needing data
+
     Examples:
     "Show my spending" -> NEW_QUERY (always query first)
     "What do you think of my budget?" -> NEW_QUERY (needs fresh data)
     "Why is that amount so high?" -> FOLLOWUP (references shown data)
-    
-    Return classification as: { "type": "NEW_QUERY" | "FOLLOWUP" | "CONTEXT_SWITCH" }`,
+    "What do you think of my spending?" -> GENERAL (no data needed)
+    "What are some good foods to eat healthy?" -> GENERAL (no data needed)
+    "How do I build good habits?" -> GENERAL (no data needed)
+    "Financial tips?" -> GENERAL (no data needed)
+    "Good Journaling?" -> GENERAL (no data needed)
+    Respond with valid JSON: {"type": "NEW_QUERY" | "FOLLOWUP" | "GENERAL"}`,
 
   // Stage 1: Select the right function to call
   FUNCTION_SELECTION: `You are HomeBrew, a data-focused AI assistant.

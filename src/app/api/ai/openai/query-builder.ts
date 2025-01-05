@@ -1,20 +1,39 @@
 import { createClient } from "@/utils/supabase/server";
-import { BUDGET, WORKOUT, NUTRITION, HABITS, TODOS } from "@/lib/db/schema";
+import {
+  BUDGET,
+  WORKOUT,
+  NUTRITION,
+  HABITS,
+  TODOS,
+  JOURNAL,
+} from "@/lib/db/schema";
 
+// Define ModuleType
 type ModuleType =
   | typeof BUDGET
   | typeof WORKOUT
   | typeof NUTRITION
   | typeof HABITS
-  | typeof TODOS;
+  | typeof TODOS
+  | typeof JOURNAL;
 
-// Define the column schema type based on our schema structure
-interface ColumnDefinition {
-  type: string;
-  required: boolean;
-}
+// Define TableSchema type based on column definitions
+type TableSchema = Record<
+  string,
+  {
+    type: string;
+    required: boolean;
+  }
+>;
 
-type TableSchema = Record<string, ColumnDefinition>;
+// Strict type for all possible tables
+type TableName =
+  | keyof typeof BUDGET.TABLES
+  | keyof typeof WORKOUT.TABLES
+  | keyof typeof NUTRITION.TABLES
+  | keyof typeof HABITS.TABLES
+  | keyof typeof TODOS.TABLES
+  | keyof typeof JOURNAL.TABLES;
 
 interface QueryFilter {
   field: string;
@@ -23,23 +42,42 @@ interface QueryFilter {
 }
 
 interface QueryArgs {
-  table: string;
+  table: TableName;
   select?: string;
   filters?: QueryFilter[];
 }
 
 // Type-safe module mapping
 const MODULE_MAP: Record<string, ModuleType> = {
-  budget_transactions: BUDGET,
-  budget_categories: BUDGET,
-  nutrition_meals: NUTRITION,
-  nutrition_food_items: NUTRITION,
-  workout_logs: WORKOUT,
-  workout_exercises: WORKOUT,
-  habits: HABITS,
-  habit_records: HABITS,
-  todos: TODOS,
-};
+  // Budget Tables
+  [BUDGET.TABLES.CATEGORIES]: BUDGET,
+  [BUDGET.TABLES.SAVINGS_GOALS]: BUDGET,
+  [BUDGET.TABLES.TRANSACTIONS]: BUDGET,
+  [BUDGET.TABLES.USER_SETTINGS]: BUDGET,
+
+  // Workout Tables
+  [WORKOUT.TABLES.EXERCISES]: WORKOUT,
+  [WORKOUT.TABLES.LOGS]: WORKOUT,
+  [WORKOUT.TABLES.LOG_EXERCISES]: WORKOUT,
+  [WORKOUT.TABLES.TEMPLATES]: WORKOUT,
+  [WORKOUT.TABLES.TEMPLATE_EXERCISES]: WORKOUT,
+
+  // Nutrition Tables
+  [NUTRITION.TABLES.MEALS]: NUTRITION,
+  [NUTRITION.TABLES.FOOD_ITEMS]: NUTRITION,
+  [NUTRITION.TABLES.COMMON_FOODS]: NUTRITION,
+
+  // Habits Tables
+  [HABITS.TABLES.HABITS]: HABITS,
+  [HABITS.TABLES.RECORDS]: HABITS,
+
+  // Todos Table
+  [TODOS.TABLES.TODOS]: TODOS,
+
+  // Journal Tables
+  [JOURNAL.TABLES.ENTRIES]: JOURNAL,
+  [JOURNAL.TABLES.ENTRY_ACTIVITIES]: JOURNAL,
+} as const;
 
 // Helper function to get the correct user ID field for a table
 function getUserIdField(table: string): string {
@@ -63,89 +101,118 @@ function getUserIdField(table: string): string {
     : "user_id";
 }
 
-// Update the getColumnSchema helper with proper typing
+// Get column schema helper with proper typing
 function getColumnSchema(table: string, module: ModuleType): TableSchema {
   const columns = module.COLUMNS[table as keyof typeof module.COLUMNS];
   if (!columns) {
     throw new Error(`No schema found for table: ${table}`);
   }
-  return columns as TableSchema;
+  return columns;
 }
 
 export async function executeQuery(args: QueryArgs, userId: string) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  // 1. Validate table exists and get correct module
-  const module = MODULE_MAP[args.table];
-  if (!module) {
-    throw new Error(`Invalid table: ${args.table}`);
-  }
-
-  // 2. Get table schema with proper typing
-  const tableSchema = getColumnSchema(args.table, module);
-
-  // 3. Validate columns if specific ones are requested
-  if (args.select && args.select !== "*") {
-    const requestedColumns = args.select
-      .split(",")
-      .map((col: string) => col.trim());
-    const validColumns = Object.keys(tableSchema);
-
-    const invalidColumns = requestedColumns.filter(
-      (col: string) => !validColumns.includes(col)
-    );
-    if (invalidColumns.length > 0) {
-      throw new Error(
-        `Invalid columns for ${args.table}: ${invalidColumns.join(", ")}`
-      );
-    }
-  }
-
-  // 4. Build base query
-  let query = supabase.from(args.table).select(args.select || "*");
-
-  // 5. Add user_id filter using the helper function
-  const userIdField = getUserIdField(args.table);
-  query = query.eq(userIdField, userId);
-
-  // 6. Apply additional filters with validation
-  if (args.filters) {
-    args.filters.forEach((filter: QueryFilter) => {
-      // Skip user_id filters for security
-      if (filter.field === userIdField) return;
-
-      // Validate field exists in schema with proper typing
-      const columnDef = tableSchema[filter.field];
-      if (!columnDef) {
-        throw new Error(`Invalid field for ${args.table}: ${filter.field}`);
-      }
-
-      // Now TypeScript knows columnDef has a type property
-      const value = validateFieldValue(filter.value, columnDef.type);
-
-      // Apply filter
-      switch (filter.operator) {
-        case "eq":
-          query = query.eq(filter.field, value);
-          break;
-        case "gt":
-          query = query.gt(filter.field, value);
-          break;
-        case "lt":
-          query = query.lt(filter.field, value);
-          break;
-        // ... other operators
-      }
+    // 1. Debug log the incoming request
+    console.log("Query Args:", {
+      table: args.table,
+      select: args.select,
+      filters: args.filters,
+      userId,
     });
-  }
 
-  const { data, error } = await query;
-  if (error) {
-    console.error("Query error:", error);
-    throw new Error(`Database query failed: ${error.message}`);
-  }
+    // 2. Validate table exists in schema
+    const module = MODULE_MAP[args.table];
+    if (!module) {
+      throw new Error(`Invalid table: ${args.table}`);
+    }
 
-  return { data, error };
+    // 3. Get and validate schema with detailed logging
+    const tableSchema = getColumnSchema(args.table, module);
+    console.log("Table Schema:", tableSchema);
+
+    // 4. Get and validate user ID field
+    const userIdField = getUserIdField(args.table);
+    console.log("User ID Field:", userIdField);
+
+    // 5. Build base query with explicit error handling
+    let query = supabase.from(args.table).select(args.select || "*");
+
+    // 6. Add user ID filter with validation
+    if (!tableSchema[userIdField]) {
+      console.error(
+        `Missing user ID field "${userIdField}" in table "${args.table}"`
+      );
+      throw new Error(`Table schema validation failed for ${args.table}`);
+    }
+    query = query.eq(userIdField, userId);
+
+    // 7. Apply additional filters with validation
+    if (args.filters) {
+      args.filters.forEach((filter) => {
+        // Skip user_id filters for security
+        if (filter.field === userIdField) return;
+
+        // Validate field exists in schema
+        const columnDef = tableSchema[filter.field];
+        if (!columnDef) {
+          throw new Error(
+            `Invalid field ${filter.field} for table ${args.table}`
+          );
+        }
+
+        const value = validateFieldValue(filter.value, columnDef.type);
+
+        switch (filter.operator) {
+          case "eq":
+            query = query.eq(filter.field, value);
+            break;
+          case "gt":
+            query = query.gt(filter.field, value);
+            break;
+          case "lt":
+            query = query.lt(filter.field, value);
+            break;
+          case "gte":
+            query = query.gte(filter.field, value);
+            break;
+          case "lte":
+            query = query.lte(filter.field, value);
+            break;
+          case "like":
+            query = query.like(filter.field, `%${value}%`);
+            break;
+        }
+      });
+    }
+
+    // 8. Execute query with error catching
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Supabase Query Error:", error);
+      throw error;
+    }
+
+    // 9. Validate response
+    if (!data) {
+      console.warn("No data returned for query:", args);
+      return { data: [], error: null };
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    // 10. Detailed error logging
+    console.error("Query Builder Error:", {
+      error,
+      args,
+      userId,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    throw error;
+  }
 }
 
 // Helper to validate field values against schema types
