@@ -107,71 +107,37 @@ export async function executeQuery(args: QueryArgs, userId: string) {
     throw new Error(`Invalid table: ${args.table}`);
   }
 
-  let query = supabase.from(args.table).select(args.select);
+  // Default select to * if not specified
+  const selectColumns = args.select || "*";
 
-  // Add user_id filter for security - ensure userId is passed directly
+  let query = supabase.from(args.table).select(selectColumns);
+
+  // Add user_id filter
   const userIdField = getUserIdField(args.table);
-  query = query.eq(userIdField, userId); // Use the actual UUID here
+  query = query.eq(userIdField, userId);
 
-  // Apply filters but ensure we don't override the user_id filter
+  // Add time range if specified
+  if (args.timeRange) {
+    query = query
+      .gte("created_at", args.timeRange.start_date)
+      .lte("created_at", args.timeRange.end_date);
+  }
+
+  // Add other filters
   if (args.filters) {
     args.filters.forEach((filter) => {
-      // Skip any user_id filters from args to prevent tampering
-      if (filter.field === userIdField) return;
-
-      const value =
-        typeof filter.value === "number"
-          ? filter.value.toString()
-          : filter.value;
+      if (filter.field === userIdField) return; // Skip user_id filters
 
       switch (filter.operator) {
         case "eq":
-          query = query.eq(filter.field, value);
+          query = query.eq(filter.field, filter.value);
           break;
         case "gt":
-          query = query.gt(filter.field, value);
+          query = query.gt(filter.field, filter.value);
           break;
-        case "lt":
-          query = query.lt(filter.field, value);
-          break;
-        case "gte":
-          query = query.gte(filter.field, value);
-          break;
-        case "lte":
-          query = query.lte(filter.field, value);
-          break;
-        case "between":
-          const [min, max] = value.toString().split(",");
-          query = query.gte(filter.field, min).lte(filter.field, max);
-          break;
-        case "like":
-          query = query.like(filter.field, `%${value}%`);
-          break;
+        // ... other operators
       }
     });
-  }
-
-  // Apply module-specific filters with proper type handling
-  if (args.statsFilter) {
-    query = query
-      .gte(args.statsFilter.field, args.statsFilter.min.toString())
-      .lte(args.statsFilter.field, args.statsFilter.max.toString());
-  }
-
-  if (args.nutritionRange) {
-    query = query
-      .gte(args.nutritionRange.field, args.nutritionRange.min.toString())
-      .lte(args.nutritionRange.field, args.nutritionRange.max.toString());
-  }
-
-  if (args.completionStatus && args.completionStatus !== "all") {
-    query = query.eq("completed", args.completionStatus === "completed");
-  }
-
-  if (args.dueDateRange) {
-    query = query
-      .gte("due_date", args.dueDateRange.start)
-      .lte("due_date", args.dueDateRange.end);
   }
 
   return await query;

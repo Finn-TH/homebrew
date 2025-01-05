@@ -4,6 +4,7 @@ import {
   createOpenAIClient,
   OPENAI_CONSTANTS,
   SYSTEM_PROMPTS,
+  ConversationType,
 } from "@/lib/ai/openai/openai";
 import {
   BUDGET,
@@ -31,21 +32,8 @@ const functions = [
         },
         select: {
           type: "string",
-          description: "Columns to select",
-          enum: [
-            "id",
-            "user_id",
-            "category_id",
-            "type",
-            "amount",
-            "description",
-            "date",
-            "is_recurring",
-            "recurring_frequency",
-            "is_savings_transaction",
-            "created_at",
-            "updated_at",
-          ],
+          description: "Comma-separated columns to select",
+          default: "*",
         },
         filters: {
           type: "array",
@@ -55,10 +43,15 @@ const functions = [
               field: {
                 type: "string",
                 enum: [
-                  ...Object.keys(BUDGET.COLUMNS.budget_categories),
-                  ...Object.keys(BUDGET.COLUMNS.budget_savings_goals),
-                  ...Object.keys(BUDGET.COLUMNS.budget_transactions),
-                  ...Object.keys(BUDGET.COLUMNS.budget_user_settings),
+                  "id",
+                  "user_id",
+                  "category_id",
+                  "type",
+                  "amount",
+                  "description",
+                  "date",
+                  "created_at",
+                  "updated_at",
                 ],
               },
               operator: {
@@ -77,7 +70,7 @@ const functions = [
           },
         },
       },
-      required: ["table", "select"],
+      required: ["table"],
     },
   },
   {
@@ -247,35 +240,69 @@ const functions = [
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const { message, conversationHistory = [] } = await req.json();
     const supabase = await createClient();
 
-    // Get the actual user ID
+    // Auth check
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError) throw userError;
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const openai = createOpenAIClient(process.env.OPENAI_API_KEY!);
 
-    // Function selection with user context
-    const completion = await openai.chat.completions.create({
+    // First, determine conversation type
+    const routerResponse = await openai.chat.completions.create({
       model: OPENAI_CONSTANTS.MODEL,
-      temperature: OPENAI_CONSTANTS.TEMPERATURE,
-      max_tokens: OPENAI_CONSTANTS.MAX_TOKENS,
+      temperature: 0.3, // Lower temperature for more consistent routing
       messages: [
         {
           role: "system",
-          content: SYSTEM_PROMPTS.FUNCTION_SELECTION,
+          content: SYSTEM_PROMPTS.CONVERSATION_ROUTER,
         },
+        ...conversationHistory.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
         {
           role: "user",
           content: message,
         },
+      ],
+    });
+
+    const conversationType = JSON.parse(
+      routerResponse.choices[0].message.content!
+    ).type as ConversationType;
+
+    // Handle based on conversation type
+    if (conversationType === "FOLLOWUP") {
+      // Use existing data from conversation history
+      const analysisResponse = await openai.chat.completions.create({
+        model: OPENAI_CONSTANTS.MODEL,
+        temperature: OPENAI_CONSTANTS.TEMPERATURE,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPTS.DATA_ANALYSIS },
+          ...conversationHistory,
+          { role: "user", content: message },
+        ],
+      });
+
+      return NextResponse.json({
+        response: analysisResponse.choices[0].message.content,
+        type: "FOLLOWUP",
+      });
+    }
+
+    // For NEW_QUERY or CONTEXT_SWITCH, fetch fresh data
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_CONSTANTS.MODEL,
+      temperature: OPENAI_CONSTANTS.TEMPERATURE,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPTS.FUNCTION_SELECTION },
+        { role: "user", content: message },
       ],
       functions,
       function_call: "auto",
@@ -284,39 +311,36 @@ export async function POST(req: Request) {
     const functionCall = completion.choices[0].message.function_call;
     if (!functionCall) throw new Error("No function call received");
 
-    // Parse args and ensure user_id is set correctly
+    // Execute query
     const args = JSON.parse(functionCall.arguments);
+    if (!args.filters) args.filters = [];
+    args.filters.push({ field: "user_id", operator: "eq", value: user.id });
 
-    // Add filters for user_id if not present
-    if (!args.filters) {
-      args.filters = [];
-    }
-    args.filters.push({
-      field: "user_id",
-      operator: "eq",
-      value: user.id, // Use actual UUID here
-    });
-
-    // Execute query with proper user ID
     const { data: queryData, error: queryError } = await executeQuery(
       args,
       user.id
     );
     if (queryError) throw queryError;
 
-    // Analysis
+    // Analysis with context
     const analysisResponse = await openai.chat.completions.create({
       model: OPENAI_CONSTANTS.MODEL,
       temperature: OPENAI_CONSTANTS.TEMPERATURE,
       messages: [
         { role: "system", content: SYSTEM_PROMPTS.DATA_ANALYSIS },
-        { role: "user", content: `Data: ${JSON.stringify(queryData)}` },
+        ...conversationHistory,
+        {
+          role: "assistant",
+          content: `New data retrieved: ${JSON.stringify(queryData)}`,
+        },
+        { role: "user", content: message },
       ],
     });
 
     return NextResponse.json({
       response: analysisResponse.choices[0].message.content,
       data: queryData,
+      type: conversationType,
     });
   } catch (error) {
     console.error("API Error:", error);
