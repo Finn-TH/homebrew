@@ -381,8 +381,8 @@ export async function POST(req: Request) {
           },
           { role: "user", content: message },
         ],
-        temperature: OPENAI_CONSTANTS.DATABASE.temperature,
-        max_tokens: OPENAI_CONSTANTS.DATABASE.max_tokens,
+        temperature: OPENAI_CONSTANTS.ANALYSIS.temperature,
+        max_tokens: OPENAI_CONSTANTS.ANALYSIS.max_tokens,
       });
 
       return NextResponse.json({

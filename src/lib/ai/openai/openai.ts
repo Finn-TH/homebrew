@@ -10,16 +10,22 @@ type OpenAIConfig = Pick<
 export const OPENAI_CONSTANTS = {
   MODEL: "gpt-4o-mini-2024-07-18" as const,
 
-  // Database operations - More precise, deterministic
+  // Function calls and database queries - Precise and deterministic
   DATABASE: {
     temperature: 0,
-    max_tokens: 5000,
+    max_tokens: 8000,
   } satisfies OpenAIConfig,
 
-  // General chat - More creative and conversational
+  // Data analysis and responses - Creative and conversational
+  ANALYSIS: {
+    temperature: 1, // Maximum creativity for responses
+    max_tokens: 4000, // Keep high token limit for detailed responses
+  } satisfies OpenAIConfig,
+
+  // General chat - Balanced approach
   GENERAL: {
-    temperature: 0.7,
-    max_tokens: 3000,
+    temperature: 1,
+    max_tokens: 4000,
   } satisfies OpenAIConfig,
 } as const;
 
