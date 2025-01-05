@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Send, X } from "lucide-react";
+import { MessageCircle, Send, X, Coffee } from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 
@@ -35,6 +35,54 @@ export function ChatWidget() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Add useEffect for keyboard events
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    // Add event listener when component mounts
+    document.addEventListener("keydown", handleEscKey);
+
+    // Clean up event listener when component unmounts
+    return () => {
+      document.removeEventListener("keydown", handleEscKey);
+    };
+  }, [isOpen]); // Only re-run if isOpen changes
+
+  // Add initial greeting when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      const greetings = [
+        "\nReady to help you brew up some success!",
+        "\nWhat can I help you with today?",
+        "\nLet's make something great together!",
+        "\nHow can I make your day better?",
+      ];
+
+      const timeOfDay = new Date().getHours();
+      let greeting = "Hello";
+
+      if (timeOfDay < 12) greeting = "Good morning";
+      else if (timeOfDay < 18) greeting = "Good afternoon";
+      else greeting = "Good evening";
+
+      const randomGreeting =
+        greetings[Math.floor(Math.random() * greetings.length)];
+
+      setMessages([
+        {
+          role: "assistant",
+          content: `${greeting}! ☕\n${randomGreeting}`,
+        },
+      ]);
+    } else {
+      setMessages([]);
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,139 +154,169 @@ export function ChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
+    <div className="fixed bottom-24 inset-x-0 flex justify-center z-50">
       {!isOpen ? (
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(true)}
-          className="rounded-full bg-[#8B4513] p-6 text-white shadow-lg hover:bg-[#A0522D] transition-colors"
+          className="rounded-full bg-[#8B4513] p-4 text-white shadow-lg 
+            hover:bg-[#A0522D] transition-all duration-200 flex items-center gap-2"
+          aria-label="Open HomeBrew Assistant"
         >
-          <MessageCircle className="h-8 w-8" />
+          {/* Animated Robot Icon */}
+          <motion.div
+            animate={{
+              y: [0, -4, 0],
+              rotate: [0, -5, 5, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="relative"
+          >
+            {/* Robot Face */}
+            <div className="relative w-8 h-8 bg-white rounded-lg">
+              {/* Eyes */}
+              <motion.div
+                animate={{
+                  scaleY: [1, 0.1, 1],
+                  transition: {
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                    duration: 0.1,
+                  },
+                }}
+                className="absolute top-2 left-0 right-0 flex justify-around"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-[#8B4513]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#8B4513]" />
+              </motion.div>
+              {/* Mouth */}
+              <div className="absolute bottom-2 left-1.5 right-1.5 h-1.5 bg-[#8B4513] rounded-full" />
+            </div>
+            {/* Antenna */}
+            <motion.div
+              animate={{ rotate: [-10, 10, -10] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute -top-2 left-1/2 w-1 h-3 bg-white rounded-full origin-bottom"
+            />
+          </motion.div>
+          <span className="text-base font-bold tracking-wide">
+            Ask HomeBrew
+          </span>
         </motion.button>
       ) : (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-[480px] rounded-xl bg-white shadow-2xl"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ type: "spring", damping: 20, stiffness: 300 }}
+          className="relative w-full max-w-2xl h-[80vh] mx-4 bg-white rounded-xl shadow-2xl border border-[#DEB887]/20"
         >
-          {/* Chat Header */}
-          <div className="flex items-center justify-between border-b p-6">
-            <h3 className="text-xl font-semibold text-[#8B4513]">
-              AI Assistant
-            </h3>
+          {/* Decorative coffee stain behind chat */}
+          <div className="absolute -z-10 top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#8B4513]/5 rounded-full blur-3xl" />
+
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-[#DEB887]/20 p-6 bg-white/80 backdrop-blur-sm rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Coffee className="h-6 w-6 text-[#8B4513]" />
+                <div className="absolute top-0 right-0 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              </div>
+              <h3 className="text-xl font-semibold text-[#8B4513]">
+                HomeBrew Assistant
+              </h3>
+            </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
+              className="rounded-full p-2 text-[#8B4513] hover:bg-[#8B4513]/10 transition-colors"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Messages */}
-          <div className="h-[600px] overflow-y-auto p-6 space-y-6">
+          {/* Messages Container with gradient background */}
+          <div className="h-[calc(80vh-8rem)] overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-[#FDF6EC] to-white">
             {messages.map((message, index) => (
-              <div
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
                 key={index}
                 className={`flex ${
                   message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
-                  className={`max-w-[90%] rounded-lg px-6 py-4 ${
+                  className={`max-w-[80%] rounded-2xl px-6 py-4 ${
                     message.role === "user"
-                      ? "bg-[#8B4513] text-white"
-                      : "bg-gray-100 text-gray-800"
+                      ? "bg-[#B07B4C] text-white"
+                      : "bg-white border border-[#DEB887]/20"
                   }`}
                 >
-                  {message.role === "user" ? (
-                    message.content
+                  {message.role === "assistant" ? (
+                    message.content.split("\n").map((text, i) => (
+                      <p key={i} className="mb-2 last:mb-0">
+                        {text}
+                      </p>
+                    ))
                   ) : (
-                    <ReactMarkdown
-                      className="prose prose-sm max-w-none"
-                      components={{
-                        // Custom styling for markdown elements
-                        h1: ({ node, ...props }) => (
-                          <h1 className="text-xl font-bold mb-4" {...props} />
-                        ),
-                        h2: ({ node, ...props }) => (
-                          <h2 className="text-lg font-bold mb-3" {...props} />
-                        ),
-                        h3: ({ node, ...props }) => (
-                          <h3 className="text-md font-bold mb-2" {...props} />
-                        ),
-                        ul: ({ node, ...props }) => (
-                          <ul className="list-disc pl-4 mb-4" {...props} />
-                        ),
-                        ol: ({ node, ...props }) => (
-                          <ol className="list-decimal pl-4 mb-4" {...props} />
-                        ),
-                        li: ({ node, ...props }) => (
-                          <li className="mb-1" {...props} />
-                        ),
-                        p: ({ node, ...props }) => (
-                          <p className="mb-4 last:mb-0" {...props} />
-                        ),
-                        strong: ({ node, ...props }) => (
-                          <strong className="font-bold" {...props} />
-                        ),
-                        em: ({ node, ...props }) => (
-                          <em className="italic" {...props} />
-                        ),
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
+                    <p>{message.content}</p>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
             {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg px-6 py-4 text-gray-800">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-pulse">Thinking</div>
-                    <div className="flex space-x-1">
-                      <div className="animate-bounce delay-100">.</div>
-                      <div className="animate-bounce delay-200">.</div>
-                      <div className="animate-bounce delay-300">.</div>
-                    </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-start"
+              >
+                <div className="bg-white rounded-2xl px-6 py-4 shadow-sm border border-[#DEB887]/20">
+                  <div className="flex items-center gap-2">
+                    <Coffee className="h-4 w-4 text-[#8B4513] animate-spin" />
+                    <span className="text-sm text-[#8B4513]">
+                      Brewing response...
+                    </span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
-            {/* Add invisible div for scrolling */}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="border-t p-6">
-            <div className="flex gap-4">
+          {/* Input Area with glass effect */}
+          <form
+            onSubmit={handleSubmit}
+            className="absolute bottom-0 left-0 right-0 border-t border-[#DEB887]/20 p-6 bg-white/80 backdrop-blur-sm rounded-b-xl"
+          >
+            <div className="flex gap-3">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 rounded-lg border px-6 py-4 focus:border-[#8B4513] focus:outline-none"
+                placeholder="Brew up a question..."
+                className="flex-1 rounded-xl border border-[#DEB887] px-4 py-3 
+                  focus:border-[#8B4513] focus:outline-none focus:ring-1 
+                  focus:ring-[#8B4513] bg-[#FDF6EC]"
                 disabled={isLoading}
               />
               <button
                 type="submit"
-                disabled={isLoading}
-                className="rounded-lg bg-[#8B4513] px-6 py-4 text-white disabled:opacity-50 hover:bg-[#A0522D] transition-colors"
+                disabled={isLoading || !input.trim()}
+                className="rounded-xl bg-[#8B4513] px-6 py-3 text-white 
+                  disabled:opacity-50 hover:bg-[#A0522D] transition-colors
+                  flex items-center gap-2"
               >
-                <Send className="h-6 w-6" />
+                <span>Brew</span>
+                <Send className="h-4 w-4" />
               </button>
             </div>
           </form>
         </motion.div>
-      )}
-
-      {/* Add memory warning display */}
-      {memoryWarning && (
-        <div className="absolute top-0 left-0 right-0 p-2 bg-yellow-100 text-yellow-800 text-sm rounded-t-lg">
-          {memoryWarning}
-        </div>
       )}
     </div>
   );
