@@ -16,23 +16,22 @@ import {
 } from "@/lib/db/schema";
 import { executeQuery } from "./query-builder";
 
-// Define database functions based on our schema
+// Define database functions based on our schema - one for each module
 const functions = [
   {
     name: "query_budget",
-    description:
-      "Query budget related data including transactions, categories, and savings goals",
+    description: "Query budget transactions and categories",
     parameters: {
       type: "object",
       properties: {
         table: {
           type: "string",
           enum: Object.values(BUDGET.TABLES),
-          description: "The budget table to query",
+          description: "Budget table to query",
         },
         select: {
           type: "string",
-          description: "Comma-separated columns to select",
+          description: "Columns to select (* for all)",
           default: "*",
         },
         filters: {
@@ -42,17 +41,7 @@ const functions = [
             properties: {
               field: {
                 type: "string",
-                enum: [
-                  "id",
-                  "user_id",
-                  "category_id",
-                  "type",
-                  "amount",
-                  "description",
-                  "date",
-                  "created_at",
-                  "updated_at",
-                ],
+                enum: Object.keys(BUDGET.COLUMNS.budget_transactions),
               },
               operator: {
                 type: "string",
@@ -62,66 +51,25 @@ const functions = [
             },
           },
         },
-        timeRange: {
-          type: "object",
-          properties: {
-            start_date: { type: "string", format: "date" },
-            end_date: { type: "string", format: "date" },
-          },
-        },
       },
       required: ["table"],
     },
   },
   {
-    name: "query_workout",
-    description:
-      "Query workout related data including logs, exercises, and templates",
-    parameters: {
-      type: "object",
-      properties: {
-        table: {
-          type: "string",
-          enum: Object.values(WORKOUT.TABLES),
-        },
-        select: {
-          type: "string",
-          enum: Object.keys(WORKOUT.COLUMNS),
-        },
-        filters: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              field: {
-                type: "string",
-                enum: [
-                  ...Object.keys(WORKOUT.COLUMNS.exercises),
-                  ...Object.keys(WORKOUT.COLUMNS.workout_logs),
-                  ...Object.keys(WORKOUT.COLUMNS.workout_log_exercises),
-                  ...Object.keys(WORKOUT.COLUMNS.workout_templates),
-                  ...Object.keys(WORKOUT.COLUMNS.workout_template_exercises),
-                ],
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  {
     name: "query_nutrition",
-    description: "Query nutrition related data including meals and food items",
+    description: "Query nutrition meals and food items",
     parameters: {
       type: "object",
       properties: {
         table: {
           type: "string",
           enum: Object.values(NUTRITION.TABLES),
+          description: "Nutrition table to query",
         },
         select: {
           type: "string",
-          enum: Object.keys(NUTRITION.COLUMNS),
+          description: "Columns to select (* for all)",
+          default: "*",
         },
         filters: {
           type: "array",
@@ -130,112 +78,21 @@ const functions = [
             properties: {
               field: {
                 type: "string",
-                enum: [
-                  ...Object.keys(NUTRITION.COLUMNS.nutri_common_foods),
-                  ...Object.keys(NUTRITION.COLUMNS.nutrition_food_items),
-                  ...Object.keys(NUTRITION.COLUMNS.nutrition_meals),
-                ],
+                enum: Object.keys(NUTRITION.COLUMNS.nutrition_meals),
               },
-            },
-          },
-        },
-        nutritionRange: {
-          type: "object",
-          properties: {
-            field: {
-              type: "string",
-              enum: NUTRITION.COMMON_FIELDS.nutritionFields,
-            },
-            min: { type: "number" },
-            max: { type: "number" },
-          },
-        },
-      },
-    },
-  },
-  {
-    name: "query_habits",
-    description: "Query habits and habit tracking records",
-    parameters: {
-      type: "object",
-      properties: {
-        table: {
-          type: "string",
-          enum: Object.values(HABITS.TABLES),
-        },
-        select: {
-          type: "string",
-          enum: Object.keys(HABITS.COLUMNS),
-        },
-        filters: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              field: {
+              operator: {
                 type: "string",
-                enum: [
-                  ...Object.keys(HABITS.COLUMNS.habits),
-                  ...Object.keys(HABITS.COLUMNS.habit_records),
-                ],
+                enum: ["eq", "gt", "lt", "gte", "lte", "between", "like"],
               },
+              value: { type: "string" },
             },
-          },
-        },
-        statsFilter: {
-          type: "object",
-          properties: {
-            field: {
-              type: "string",
-              enum: HABITS.COMMON_FIELDS.statsFields,
-            },
-            min: { type: "number" },
-            max: { type: "number" },
           },
         },
       },
+      required: ["table"],
     },
   },
-  {
-    name: "query_todos",
-    description: "Query todo items and their status",
-    parameters: {
-      type: "object",
-      properties: {
-        table: {
-          type: "string",
-          enum: Object.values(TODOS.TABLES),
-        },
-        select: {
-          type: "string",
-          enum: Object.keys(TODOS.COLUMNS),
-        },
-        filters: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              field: {
-                type: "string",
-                enum: Object.keys(TODOS.COLUMNS.todos),
-              },
-            },
-          },
-        },
-        completionStatus: {
-          type: "string",
-          enum: ["completed", "pending", "all"],
-        },
-        dueDateRange: {
-          type: "object",
-          properties: {
-            start: { type: "string", format: "date-time" },
-            end: { type: "string", format: "date-time" },
-          },
-        },
-      },
-    },
-  },
+  // Add similar definitions for WORKOUT, HABITS, TODOS, etc.
 ];
 
 export async function POST(req: Request) {

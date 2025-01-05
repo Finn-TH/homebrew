@@ -1,144 +1,179 @@
 import { createClient } from "@/utils/supabase/server";
-import {
-  BUDGET,
-  WORKOUT,
-  JOURNAL,
-  NUTRITION,
-  HABITS,
-  TODOS,
-} from "@/lib/db/schema";
+import { BUDGET, WORKOUT, NUTRITION, HABITS, TODOS } from "@/lib/db/schema";
 
-// Type-safe field definitions
-type HabitStatsField = (typeof HABITS.COMMON_FIELDS.statsFields)[number];
-type NutritionField = (typeof NUTRITION.COMMON_FIELDS.nutritionFields)[number];
+type ModuleType =
+  | typeof BUDGET
+  | typeof WORKOUT
+  | typeof NUTRITION
+  | typeof HABITS
+  | typeof TODOS;
+
+// Define the column schema type based on our schema structure
+interface ColumnDefinition {
+  type: string;
+  required: boolean;
+}
+
+type TableSchema = Record<string, ColumnDefinition>;
 
 interface QueryFilter {
   field: string;
   operator: "eq" | "gt" | "lt" | "gte" | "lte" | "between" | "like";
-  value: string | number; // Allow both string and number values
+  value: string | number | boolean;
 }
 
-// Create a union type of all possible table names
-type TableName =
-  | keyof typeof BUDGET.TABLES
-  | keyof typeof WORKOUT.TABLES
-  | keyof typeof NUTRITION.TABLES
-  | keyof typeof HABITS.TABLES
-  | keyof typeof TODOS.TABLES
-  | keyof typeof JOURNAL.TABLES;
-
-// Extended interface to handle all module-specific queries
 interface QueryArgs {
-  table: TableName; // Now table must be one of the valid table names
-  select: string;
+  table: string;
+  select?: string;
   filters?: QueryFilter[];
-  // Module specific filters
-  timeRange?: {
-    start_date: string;
-    end_date: string;
-  };
-  statsFilter?: {
-    field: HabitStatsField;
-    min: number;
-    max: number;
-  };
-  nutritionRange?: {
-    field: NutritionField;
-    min: number;
-    max: number;
-  };
-  completionStatus?: "completed" | "pending" | "all";
-  dueDateRange?: {
-    start: string;
-    end: string;
-  };
 }
+
+// Type-safe module mapping
+const MODULE_MAP: Record<string, ModuleType> = {
+  budget_transactions: BUDGET,
+  budget_categories: BUDGET,
+  nutrition_meals: NUTRITION,
+  nutrition_food_items: NUTRITION,
+  workout_logs: WORKOUT,
+  workout_exercises: WORKOUT,
+  habits: HABITS,
+  habit_records: HABITS,
+  todos: TODOS,
+};
 
 // Helper function to get the correct user ID field for a table
-export function getUserIdField(table: TableName): string {
-  // Special case for WORKOUT tables since it has a different structure
-  if (table in WORKOUT.TABLES) {
-    // Check if the table has a specific userIdField
-    if (table in WORKOUT.COMMON_FIELDS.userIdFields) {
-      return WORKOUT.COMMON_FIELDS.userIdFields[
+function getUserIdField(table: string): string {
+  // Special case for WORKOUT tables
+  if (Object.values(WORKOUT.TABLES).includes(table as any)) {
+    const workoutField =
+      WORKOUT.COMMON_FIELDS.userIdFields[
         table as keyof typeof WORKOUT.COMMON_FIELDS.userIdFields
       ];
-    }
-    return "user_id"; // Default if not found
+    return workoutField || "user_id";
   }
 
   // For other modules
-  const modules = [BUDGET, JOURNAL, NUTRITION, HABITS, TODOS];
-  for (const module of modules) {
-    if (Object.values(module.TABLES).includes(table as any)) {
-      return module.COMMON_FIELDS.userIdField;
-    }
+  const module = MODULE_MAP[table];
+  if (!module || !("COMMON_FIELDS" in module)) {
+    throw new Error(`Invalid table: ${table}`);
   }
 
-  return "user_id"; // default
+  return "userIdField" in module.COMMON_FIELDS
+    ? module.COMMON_FIELDS.userIdField
+    : "user_id";
 }
 
-// Helper function to validate table fields
-function validateTableField(table: string, field: string): boolean {
-  for (const module of [BUDGET, WORKOUT, JOURNAL, NUTRITION, HABITS, TODOS]) {
-    if (table in module.TABLES) {
-      const columns = module.COLUMNS[table as keyof typeof module.COLUMNS];
-      return field in columns;
-    }
+// Update the getColumnSchema helper with proper typing
+function getColumnSchema(table: string, module: ModuleType): TableSchema {
+  const columns = module.COLUMNS[table as keyof typeof module.COLUMNS];
+  if (!columns) {
+    throw new Error(`No schema found for table: ${table}`);
   }
-  return false;
+  return columns as TableSchema;
 }
 
-// Main query builder function
 export async function executeQuery(args: QueryArgs, userId: string) {
   const supabase = await createClient();
 
-  // Validate table exists
-  const allTables = [
-    ...Object.values(BUDGET.TABLES),
-    ...Object.values(WORKOUT.TABLES),
-    ...Object.values(JOURNAL.TABLES),
-    ...Object.values(NUTRITION.TABLES),
-    ...Object.values(HABITS.TABLES),
-    ...Object.values(TODOS.TABLES),
-  ] as const;
-
-  if (!allTables.includes(args.table as any)) {
+  // 1. Validate table exists and get correct module
+  const module = MODULE_MAP[args.table];
+  if (!module) {
     throw new Error(`Invalid table: ${args.table}`);
   }
 
-  // Default select to * if not specified
-  const selectColumns = args.select || "*";
+  // 2. Get table schema with proper typing
+  const tableSchema = getColumnSchema(args.table, module);
 
-  let query = supabase.from(args.table).select(selectColumns);
+  // 3. Validate columns if specific ones are requested
+  if (args.select && args.select !== "*") {
+    const requestedColumns = args.select
+      .split(",")
+      .map((col: string) => col.trim());
+    const validColumns = Object.keys(tableSchema);
 
-  // Add user_id filter
+    const invalidColumns = requestedColumns.filter(
+      (col: string) => !validColumns.includes(col)
+    );
+    if (invalidColumns.length > 0) {
+      throw new Error(
+        `Invalid columns for ${args.table}: ${invalidColumns.join(", ")}`
+      );
+    }
+  }
+
+  // 4. Build base query
+  let query = supabase.from(args.table).select(args.select || "*");
+
+  // 5. Add user_id filter using the helper function
   const userIdField = getUserIdField(args.table);
   query = query.eq(userIdField, userId);
 
-  // Add time range if specified
-  if (args.timeRange) {
-    query = query
-      .gte("created_at", args.timeRange.start_date)
-      .lte("created_at", args.timeRange.end_date);
-  }
-
-  // Add other filters
+  // 6. Apply additional filters with validation
   if (args.filters) {
-    args.filters.forEach((filter) => {
-      if (filter.field === userIdField) return; // Skip user_id filters
+    args.filters.forEach((filter: QueryFilter) => {
+      // Skip user_id filters for security
+      if (filter.field === userIdField) return;
 
+      // Validate field exists in schema with proper typing
+      const columnDef = tableSchema[filter.field];
+      if (!columnDef) {
+        throw new Error(`Invalid field for ${args.table}: ${filter.field}`);
+      }
+
+      // Now TypeScript knows columnDef has a type property
+      const value = validateFieldValue(filter.value, columnDef.type);
+
+      // Apply filter
       switch (filter.operator) {
         case "eq":
-          query = query.eq(filter.field, filter.value);
+          query = query.eq(filter.field, value);
           break;
         case "gt":
-          query = query.gt(filter.field, filter.value);
+          query = query.gt(filter.field, value);
+          break;
+        case "lt":
+          query = query.lt(filter.field, value);
           break;
         // ... other operators
       }
     });
   }
 
-  return await query;
+  const { data, error } = await query;
+  if (error) {
+    console.error("Query error:", error);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+
+  return { data, error };
+}
+
+// Helper to validate field values against schema types
+function validateFieldValue(value: unknown, schemaType: string): any {
+  switch (schemaType) {
+    case "uuid":
+      if (
+        typeof value !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+          value
+        )
+      ) {
+        throw new Error(`Invalid UUID format: ${value}`);
+      }
+      return value;
+    case "numeric":
+    case "double precision":
+      const num = Number(value);
+      if (isNaN(num)) {
+        throw new Error(`Invalid number format: ${value}`);
+      }
+      return num;
+    case "date":
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        throw new Error(`Invalid date format: ${value}`);
+      }
+      return value;
+    default:
+      return value;
+  }
 }
