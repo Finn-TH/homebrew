@@ -5,6 +5,7 @@ import { getUserLocalDate } from "../utils/date";
 import DailyView from "./daily-view";
 import WeeklyView from "./weekly-view";
 import NutritionAnalytics from "./nutrition-analytics";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface NutritionDisplayProps {
   meals: NutritionMeal[];
@@ -48,19 +49,63 @@ export default function NutritionDisplay({
     );
   };
 
-  if (viewType === "weekly") {
-    return <WeeklyView meals={meals} onDeleteMeal={onDeleteMeal} />;
-  }
-
-  if (viewType === "analytics") {
-    return <NutritionAnalytics />;
-  }
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      x: -20,
+    },
+    animate: {
+      opacity: 1,
+      x: 0,
+    },
+    exit: {
+      opacity: 0,
+      x: 20,
+    },
+  };
 
   return (
-    <DailyView
-      meals={sortByMealType(dailyMeals)}
-      nutritionTotals={calculateDailyTotals(dailyMeals)}
-      onDeleteMeal={onDeleteMeal}
-    />
+    <AnimatePresence mode="wait">
+      {viewType === "weekly" && (
+        <motion.div
+          key="weekly"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+          transition={{ duration: 0.2 }}
+        >
+          <WeeklyView meals={meals} onDeleteMeal={onDeleteMeal} />
+        </motion.div>
+      )}
+      {viewType === "analytics" && (
+        <motion.div
+          key="analytics"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+          transition={{ duration: 0.2 }}
+        >
+          <NutritionAnalytics />
+        </motion.div>
+      )}
+      {viewType === "daily" && (
+        <motion.div
+          key="daily"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+          transition={{ duration: 0.2 }}
+        >
+          <DailyView
+            meals={sortByMealType(dailyMeals)}
+            nutritionTotals={calculateDailyTotals(dailyMeals)}
+            onDeleteMeal={onDeleteMeal}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
