@@ -7,6 +7,7 @@ import {
   MoreVertical,
   ChevronDown,
   AlertCircle,
+  ChevronUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Transaction, Category } from "../types";
@@ -16,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { formatMoney } from "../utils/money";
 import { filterTransactionsByMonth } from "../utils/calculations";
 import * as Dialog from "@radix-ui/react-dialog";
+import { motion } from "framer-motion";
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -64,12 +66,70 @@ export default function RecentTransactions({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] =
     useState<Transaction | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: "date" | "amount" | "category";
+    direction: "asc" | "desc";
+  }>({ key: "date", direction: "desc" });
 
   const currentDate = new Date();
   const currentMonthTransactions = filterTransactionsByMonth(
     transactions,
     currentDate
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const sortTransactions = (transactions: Transaction[]) => {
+    return [...transactions].sort((a, b) => {
+      switch (sortConfig.key) {
+        case "date":
+          const dateA = new Date(a.date).getTime();
+          const dateB = new Date(b.date).getTime();
+          return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
+
+        case "amount":
+          return sortConfig.direction === "asc"
+            ? a.amount - b.amount
+            : b.amount - a.amount;
+
+        case "category":
+          const catA = a.category?.name || "Uncategorized";
+          const catB = b.category?.name || "Uncategorized";
+          return sortConfig.direction === "asc"
+            ? catA.localeCompare(catB)
+            : catB.localeCompare(catA);
+
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const handleSort = (key: "date" | "amount" | "category") => {
+    setSortConfig((current) => ({
+      key,
+      direction:
+        current.key === key && current.direction === "desc" ? "asc" : "desc",
+    }));
+  };
+
+  // Filter and sort transactions
+  const filteredAndSortedTransactions = sortTransactions(
+    currentMonthTransactions.filter((transaction) => {
+      if (selectedType !== "all" && transaction.type !== selectedType)
+        return false;
+      if (selectedCategory && transaction.category_id !== selectedCategory)
+        return false;
+      return true;
+    })
+  );
+
+  const SortIcon = ({ columnKey }: { columnKey: typeof sortConfig.key }) => {
+    if (sortConfig.key !== columnKey) return null;
+    return sortConfig.direction === "asc" ? (
+      <ChevronUp className="h-4 w-4" />
+    ) : (
+      <ChevronDown className="h-4 w-4" />
+    );
+  };
 
   return (
     <div className="bg-white/80 rounded-xl p-8 backdrop-blur-sm">
@@ -131,13 +191,44 @@ export default function RecentTransactions({
         </div>
       </div>
 
-      <div className="space-y-4">
-        {currentMonthTransactions.map((transaction) => {
-          const display = getTransactionDisplay(transaction);
+      {/* Add sorting headers */}
+      <div className="flex items-center justify-between px-6 py-3 text-sm text-[#8B4513]/70">
+        <button
+          onClick={() => handleSort("category")}
+          className="flex items-center gap-1 hover:text-[#8B4513] transition-colors"
+        >
+          Category
+          <SortIcon columnKey="category" />
+        </button>
 
+        <div className="flex items-center gap-8">
+          <button
+            onClick={() => handleSort("amount")}
+            className="flex items-center gap-1 hover:text-[#8B4513] transition-colors"
+          >
+            Amount
+            <SortIcon columnKey="amount" />
+          </button>
+
+          <button
+            onClick={() => handleSort("date")}
+            className="flex items-center gap-1 hover:text-[#8B4513] transition-colors"
+          >
+            Date
+            <SortIcon columnKey="date" />
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {filteredAndSortedTransactions.map((transaction) => {
+          const display = getTransactionDisplay(transaction);
           return (
-            <div
+            <motion.div
               key={transaction.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
               className="flex items-center justify-between py-4 px-6 rounded-lg hover:bg-[#8B4513]/[0.03] transition-colors"
             >
               <div className="flex items-center gap-4">
@@ -195,11 +286,11 @@ export default function RecentTransactions({
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>
               </div>
-            </div>
+            </motion.div>
           );
         })}
 
-        {currentMonthTransactions.length === 0 && (
+        {filteredAndSortedTransactions.length === 0 && (
           <div className="text-center py-8 text-[#8B4513]/70">
             No transactions for {format(currentDate, "MMMM yyyy")}
           </div>

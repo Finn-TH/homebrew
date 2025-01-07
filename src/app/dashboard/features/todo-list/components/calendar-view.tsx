@@ -3,6 +3,7 @@
 import { Todo } from "../types";
 import { useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { motion } from "framer-motion";
 
 interface CalendarViewProps {
   todos: Todo[];
@@ -24,7 +25,12 @@ export function CalendarView({ todos }: CalendarViewProps) {
   }, {} as Record<string, Todo[]>);
 
   return (
-    <div className="bg-white rounded-xl border border-[#8B4513]/10 p-6">
+    <motion.div
+      className="bg-white rounded-xl border border-[#8B4513]/10 p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
       <div className="grid grid-cols-7 gap-4">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
@@ -35,13 +41,16 @@ export function CalendarView({ todos }: CalendarViewProps) {
           </div>
         ))}
 
-        {days.map((day) => {
+        {days.map((day, index) => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayTodos = todosByDate[dateKey] || [];
 
           return (
-            <div
+            <motion.div
               key={dateKey}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, delay: index * 0.02 }}
               className="aspect-square p-2 border border-[#8B4513]/10 rounded-lg hover:bg-[#8B4513]/5"
             >
               <div className="text-sm text-[#8B4513]/60">
@@ -73,10 +82,10 @@ export function CalendarView({ todos }: CalendarViewProps) {
                   ))}
                 </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 }

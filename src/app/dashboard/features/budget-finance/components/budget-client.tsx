@@ -9,6 +9,7 @@ import SavingsGoals from "./savings-goals";
 import QuickExpense from "./quick-expense";
 import AnalyticsWrapper from "../server/analytics-wrapper";
 import { Category, Transaction, SavingsGoal } from "../types";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface BudgetClientProps {
   transactions: Transaction[];
@@ -62,46 +63,63 @@ export default function BudgetClient({
         </div>
       </div>
 
-      {currentView === "dashboard" ? (
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-8 space-y-8">
-            <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-              <BudgetOverview
-                transactions={transactions}
-                monthlyBudget={monthlyBudget}
-              />
+      <AnimatePresence mode="wait">
+        {currentView === "dashboard" ? (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="grid grid-cols-12 gap-8"
+          >
+            <div className="col-span-8 space-y-8">
+              <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
+                <BudgetOverview
+                  transactions={transactions}
+                  monthlyBudget={monthlyBudget}
+                />
+              </div>
+              <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
+                <RecentTransactions
+                  transactions={transactions}
+                  categories={categories}
+                />
+              </div>
             </div>
-            <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-              <RecentTransactions
-                transactions={transactions}
-                categories={categories}
-              />
+            <div className="col-span-4 space-y-8">
+              <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
+                <SavingsGoals
+                  goals={savingsGoals}
+                  monthlyBudget={monthlyBudget}
+                  monthlyExpenses={monthlyExpenses}
+                  monthlyIncome={monthlyIncome}
+                />
+              </div>
+              <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
+                <ExpenseCategories
+                  categories={categories}
+                  transactions={transactions}
+                />
+              </div>
             </div>
-          </div>
-          <div className="col-span-4 space-y-8">
-            <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-              <SavingsGoals
-                goals={savingsGoals}
-                monthlyBudget={monthlyBudget}
-                monthlyExpenses={monthlyExpenses}
-                monthlyIncome={monthlyIncome}
-              />
-            </div>
-            <div className="bg-white/80 rounded-xl p-6 backdrop-blur-sm">
-              <ExpenseCategories
-                categories={categories}
-                transactions={transactions}
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <AnalyticsWrapper
-          transactions={transactions}
-          monthlyBudget={monthlyBudget}
-          goals={savingsGoals}
-        />
-      )}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="analytics"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <AnalyticsWrapper
+              transactions={transactions}
+              monthlyBudget={monthlyBudget}
+              goals={savingsGoals}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
