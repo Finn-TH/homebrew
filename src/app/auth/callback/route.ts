@@ -5,15 +5,21 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
+  const token_hash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
+
+  // Handle password reset callback
+  if (token_hash && type === "recovery") {
+    return NextResponse.redirect(
+      `${origin}/auth/update-password?token_hash=${token_hash}&type=${type}`
+    );
+  }
 
   if (code) {
     const supabase = await createClient();
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      const providerToken = data.session?.provider_token;
-      const providerRefreshToken = data.session?.provider_refresh_token;
-
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
@@ -27,5 +33,6 @@ export async function GET(request: Request) {
     }
   }
 
+  // Return to error page if something went wrong
   return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }

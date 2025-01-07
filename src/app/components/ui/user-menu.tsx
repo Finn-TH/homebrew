@@ -5,6 +5,7 @@ import Image from "next/image";
 import { LogOut, Settings, Github } from "lucide-react";
 import { signOut } from "@/app/dashboard/actions";
 import DropdownMenu from "./dropdown-menu";
+import { useRouter } from "next/navigation";
 
 interface UserMenuProps {
   user: any;
@@ -12,12 +13,13 @@ interface UserMenuProps {
 
 export default function UserMenu({ user }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const loginProvider = user.app_metadata?.provider || "email";
 
   const trigger = (
     <button
       onClick={() => setIsOpen(!isOpen)}
-      className="relative rounded-full overflow-hidden hover:ring-2 hover:ring-[#8B4513]/20 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#8B4513]/40"
+      className="relative w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-[#8B4513]/20 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#8B4513]/40"
     >
       {user.user_metadata?.avatar_url ? (
         <Image
@@ -25,10 +27,11 @@ export default function UserMenu({ user }: UserMenuProps) {
           alt="Profile"
           width={40}
           height={40}
-          className="rounded-full object-cover"
+          className="w-full h-full object-cover"
+          priority
         />
       ) : (
-        <div className="w-10 h-10 bg-[#8B4513]/10 rounded-full flex items-center justify-center">
+        <div className="w-full h-full bg-[#8B4513]/10 rounded-full flex items-center justify-center">
           <span className="text-[#8B4513] text-sm font-medium">
             {user.email?.charAt(0).toUpperCase()}
           </span>
@@ -48,13 +51,16 @@ export default function UserMenu({ user }: UserMenuProps) {
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
             {user.user_metadata?.avatar_url && (
-              <Image
-                src={user.user_metadata.avatar_url}
-                alt="Profile"
-                width={40}
-                height={40}
-                className="rounded-full flex-shrink-0 object-cover"
-              />
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                <Image
+                  src={user.user_metadata.avatar_url}
+                  alt="Profile"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+                  priority
+                />
+              </div>
             )}
             <div className="flex-1 min-w-0">
               <div className="font-medium text-[#8B4513] truncate">
@@ -71,7 +77,8 @@ export default function UserMenu({ user }: UserMenuProps) {
         <div className="p-1">
           <button
             onClick={() => {
-              // Add manage account functionality later
+              setIsOpen(false);
+              router.push("/dashboard/account");
             }}
             className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#8B4513] rounded-md transition-colors duration-200 hover:bg-[#8B4513]/5"
           >
