@@ -62,6 +62,10 @@ const config: Config = {
         "fade-in": "fadeIn 0.5s ease-in-out",
         "slide-up": "slideUp 0.5s ease-out",
         "slide-down": "slideDown 0.5s ease-out",
+        "steam-1": "steam 2s ease-in-out infinite",
+        "steam-2": "steam 2s ease-in-out infinite 0.3s",
+        "steam-3": "steam 2s ease-in-out infinite 0.6s",
+        "coffee-bounce": "bounce 2s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -75,6 +79,15 @@ const config: Config = {
         slideDown: {
           "0%": { transform: "translateY(-20px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        steam: {
+          "0%": { transform: "translateY(0) scale(1)", opacity: "0" },
+          "50%": { transform: "translateY(-5px) scale(1.2)", opacity: "0.5" },
+          "100%": { transform: "translateY(-10px) scale(1)", opacity: "0" },
+        },
+        bounce: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-3px)" },
         },
       },
     },

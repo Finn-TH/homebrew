@@ -56,11 +56,11 @@ export default function UserMenu({ user }: UserMenuProps) {
                 className="rounded-full flex-shrink-0 object-cover"
               />
             )}
-            <div className="flex-1">
-              <div className="font-medium text-[#8B4513]">
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-[#8B4513] truncate">
                 {user.user_metadata?.full_name || "User"}
               </div>
-              <div className="text-sm text-[#8B4513]/60 break-words">
+              <div className="text-sm text-[#8B4513]/60 truncate">
                 {user.email}
               </div>
             </div>

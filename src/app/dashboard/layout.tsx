@@ -35,9 +35,25 @@ export default async function DashboardLayout({
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-full bg-white/50 px-4 py-2 text-sm text-[#8B4513] backdrop-blur-sm transition-all hover:bg-white/60">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              Brewing in progress ☕️
+            <div className="flex items-center gap-2 rounded-full bg-white/50 px-4 py-2 text-sm text-[#8B4513] backdrop-blur-sm transition-all hover:bg-white/60 group">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-[pulse_1.5s_ease-in-out_infinite]" />
+              <div className="flex items-center gap-1">
+                <span className="animate-slide-up font-medium">
+                  Brewing in progress
+                </span>
+                <div className="relative">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <div className="flex gap-1">
+                      <div className="w-1 h-3 bg-[#8B4513]/30 rounded-full animate-steam-1" />
+                      <div className="w-1 h-3 bg-[#8B4513]/30 rounded-full animate-steam-2" />
+                      <div className="w-1 h-3 bg-[#8B4513]/30 rounded-full animate-steam-3" />
+                    </div>
+                  </div>
+                  <span className="inline-block text-base animate-[bounce_1s_ease-in-out_infinite] transform hover:scale-125 transition-transform">
+                    ☕️
+                  </span>
+                </div>
+              </div>
             </div>
             {user && <UserMenu user={user} />}
           </div>
