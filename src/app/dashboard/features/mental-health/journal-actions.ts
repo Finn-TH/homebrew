@@ -217,3 +217,24 @@ export async function getDailyMoods() {
     created_at: entry.created_at.split("T")[0], // Clean up timestamp
   }));
 }
+
+export async function getAllJournalEntries() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: entries, error } = await supabase
+    .from("journal_entries")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .returns<JournalEntry[]>();
+
+  if (error) throw error;
+  return entries;
+}

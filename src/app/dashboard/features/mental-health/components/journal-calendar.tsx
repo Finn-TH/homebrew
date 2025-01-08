@@ -25,7 +25,8 @@ export default function JournalCalendar({ entries }: JournalCalendarProps) {
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const getDayEntries = (day: Date) =>
-    entries.filter((entry) => isSameDay(new Date(entry.created_at), day));
+    entries?.filter((entry) => isSameDay(new Date(entry.created_at), day)) ||
+    [];
 
   return (
     <div className="space-y-4">
@@ -81,34 +82,21 @@ export default function JournalCalendar({ entries }: JournalCalendarProps) {
                 </span>
 
                 {hasEntries && (
-                  <div className="mt-2 space-y-2">
+                  <div className="mt-2 space-y-1">
                     {dayEntries.map((entry) => (
                       <div
                         key={entry.id}
-                        className="flex items-center gap-2 text-sm"
+                        className="flex items-center gap-1 text-xs"
                       >
                         {entry.mood && (
-                          <span className="text-base">
+                          <span title={entry.mood}>
                             {MOOD_EMOJIS[entry.mood]}
                           </span>
                         )}
-                        {entry.title && (
-                          <span className="text-[#8B4513] truncate">
-                            {entry.title}
-                          </span>
-                        )}
-                        {entry.activities && entry.activities.length > 0 && (
-                          <div className="flex gap-1">
-                            {entry.activities.map((activity) => (
-                              <span
-                                key={activity}
-                                className="px-1.5 py-0.5 text-xs rounded-full bg-[#8B4513]/10 text-[#8B4513]"
-                              >
-                                {activity}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        <span className="text-[#8B4513] truncate">
+                          {entry.title ||
+                            format(new Date(entry.created_at), "h:mm a")}
+                        </span>
                       </div>
                     ))}
                   </div>

@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 interface JournalClientProps {
   initialEntries: JournalEntry[];
+  allEntries: JournalEntry[];
   dailyMoods?: {
     mood: number;
     energy: number;
@@ -21,6 +22,7 @@ interface JournalClientProps {
 
 export default function JournalClient({
   initialEntries,
+  allEntries,
   dailyMoods,
 }: JournalClientProps) {
   const [view, setView] = useState<"list" | "hybrid" | "analytics">("list");
@@ -91,10 +93,10 @@ export default function JournalClient({
           className="bg-white/80 rounded-xl p-6 backdrop-blur-sm min-h-[500px]"
         >
           {view === "list" && <JournalEntries entries={initialEntries} />}
-          {view === "hybrid" && <JournalHybridView entries={initialEntries} />}
+          {view === "hybrid" && <JournalHybridView entries={allEntries} />}
           {view === "analytics" && (
             <MentalHealthAnalytics
-              entries={initialEntries}
+              entries={allEntries}
               dailyMoods={dailyMoods}
             />
           )}
