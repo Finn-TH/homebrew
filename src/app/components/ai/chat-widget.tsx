@@ -114,7 +114,6 @@ export function ChatWidget() {
       // Handle memory status
       if (data.memoryStatus) {
         if (data.memoryStatus.cleared) {
-          // Clear messages if memory was cleared
           setMessages([
             {
               role: "assistant",
@@ -126,17 +125,23 @@ export function ChatWidget() {
 
         if (data.memoryStatus.warning) {
           setMemoryWarning(data.memoryStatus.warning);
-          // Clear warning after 5 seconds
           setTimeout(() => setMemoryWarning(undefined), 5000);
         }
       }
 
-      // Update to only add AI message since user message is already added
+      // Filter out the technical type information from the response
+      const cleanResponse = data.response
+        .replace(/{"type":\s*"[^"]*"}/g, "") // Remove JSON type
+        .replace(/Message type:.*$/gm, "") // Remove "Message type:" lines
+        .replace(/Type:.*$/gm, "") // Remove "Type:" lines
+        .trim();
+
+      // Update messages with cleaned response
       setMessages((prev) => [
         ...(data.memoryStatus?.cleared ? [] : prev),
         {
           role: "assistant",
-          content: data.response || "Sorry, I couldn't process that request.",
+          content: cleanResponse || "Sorry, I couldn't process that request.",
         },
       ]);
     } catch (error) {

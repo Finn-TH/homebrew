@@ -339,9 +339,10 @@ export async function POST(req: Request) {
         max_tokens: OPENAI_CONSTANTS.GENERAL.max_tokens,
       });
 
+      // Only return the actual response content
       return NextResponse.json({
         response: directResponse.choices[0].message.content,
-        type: "GENERAL",
+        type: "GENERAL", // This is for internal use only
       });
     }
 
