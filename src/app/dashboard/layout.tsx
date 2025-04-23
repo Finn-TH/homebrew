@@ -2,6 +2,7 @@ import { Coffee } from "lucide-react";
 import UserMenu from "@/app/components/ui/user-menu";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
+import DemoBanner from "@/app/dashboard/components/ui/demo-banner";
 
 export default async function DashboardLayout({
   children,
@@ -15,6 +16,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#FDF6EC]">
+      <DemoBanner />
       {/* Background circles */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -left-4 top-1/4 h-64 w-64 rounded-full bg-[#8B4513]/5 blur-3xl animate-pulse-slow" />

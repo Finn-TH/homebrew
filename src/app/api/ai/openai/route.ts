@@ -319,6 +319,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+        // ⛔️ Disable chatbot check here
+    if (process.env.NEXT_PUBLIC_DISABLE_CHATBOT === "true") {
+      return NextResponse.json({
+        response: "Chatbot is disabled in this demo mode.",
+        type: "DISABLED",
+      });
+    }
+
     const shouldQueryDatabase = DATABASE_KEYWORDS.some((keyword) =>
       message.toLowerCase().includes(keyword)
     );

@@ -53,6 +53,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+      // ✅ Chatbot disable toggle
+    if (process.env.NEXT_PUBLIC_DISABLE_CHATBOT === "true") {
+      return NextResponse.json({
+        response: "Gemini chatbot is disabled in this demo mode.",
+        type: "DISABLED",
+      });
+    }
+
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.0-flash-exp",
