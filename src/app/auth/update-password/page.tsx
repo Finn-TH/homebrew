@@ -1,4 +1,4 @@
-"use client";
+export const dynamic = "force-dynamic"; // 👈 Opt out of prerendering
 
 import { Suspense } from "react";
 import UpdatePasswordForm from "./UpdatePasswordForm";
