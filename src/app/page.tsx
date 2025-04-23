@@ -44,7 +44,7 @@ export default function Home() {
           <div className="flex items-center space-x-2">
             <Coffee className="h-8 w-8 text-[#8B4513]" />
             <span className="text-xl font-semibold text-[#8B4513]">
-              HomeBrew
+              FinnsBrew
             </span>
           </div>
         </nav>
